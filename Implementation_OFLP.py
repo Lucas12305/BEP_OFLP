@@ -619,7 +619,7 @@ def feas_region_box_LP(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
     planes = create_conv_region(points, solutions, circles)
     
     if plot == True:
-        plot_box(x_lb,x_ub,y_lb,y_ub, circles, points, planes, trc, rc)
+        plot_box_GS(x_lb,x_ub,y_lb,y_ub, circles, points, planes, trc, rc)
     
     #return None
     return points, planes
