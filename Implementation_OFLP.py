@@ -61,9 +61,8 @@ def generate_points(x_lb : float, x_ub : float, y_lb : float, y_ub : float) -> l
     :param y_ub: The highest y of the box.
     '''
     points = []
-    tol = math.ceil(x_ub - x_lb)
-    x = np.linspace(x_lb - tol, x_ub + tol, tol * 5)
-    y = np.linspace(y_lb - tol, y_ub + tol, tol * 5)
+    x = np.linspace(x_lb, x_ub, (x_ub - x_lb) / 100)
+    y = np.linspace(y_lb, y_ub, (y_ub - y_lb) / 100)
     for i in x:
         for j in y:
             points.append([i,j])
@@ -213,6 +212,9 @@ def update_arcs(arcs : list, TwoPoints : list) -> list:
         return [TwoPoints[1], TwoPoints[0]]
     for arc in arcs:
         if (arc[0] <= TwoPoints[0]) and (TwoPoints[1] <= arc[1]):
+            return None
+    
+    return None
 
         
 
