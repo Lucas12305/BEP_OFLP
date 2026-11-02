@@ -89,7 +89,7 @@ def angle_points(refP : list, oP : list) -> tuple:
 # In[ ]:
 
 
-def box_circles(x_lb, x_ub, y_lb, y_ub, circle) -> list:
+def box_circles(x_lb, x_ub, y_lb, y_ub, circles : list, index_c : int) -> list:
     '''
     This function takes a box and a circle and returns the intersections that this circle has with the box.
     :param x_lb: The lowest x of the box.
@@ -98,7 +98,7 @@ def box_circles(x_lb, x_ub, y_lb, y_ub, circle) -> list:
     :param y_ub: The highest y of the box.
     :param circle: The circle that we are considering
     '''
-    x, y, r = circle
+    x, y, r = circles[index_c]
     intersections = []
 
     # We first check which sides the circle intersects with
@@ -110,7 +110,7 @@ def box_circles(x_lb, x_ub, y_lb, y_ub, circle) -> list:
         if py != []:
             for yi in py:
                 if ((x_lb, yi) not in intersections) and y_lb <= yi <= y_ub:
-                    intersections.append([x_lb, yi])
+                    intersections.append([x_lb, yi, (index_c + 4), 0])
     
     if x - r <= x_ub <= x + r:
         a = 1
@@ -120,7 +120,7 @@ def box_circles(x_lb, x_ub, y_lb, y_ub, circle) -> list:
         if py != []:
             for yi in py:
                 if ((x_ub, yi) not in intersections) and y_lb <= yi <= y_ub:
-                    intersections.append([x_ub, yi])
+                    intersections.append([x_ub, yi, (index_c + 4), [1]])
     
     if y - r <= y_lb <= y + r:
         a = 1
@@ -130,7 +130,7 @@ def box_circles(x_lb, x_ub, y_lb, y_ub, circle) -> list:
         if px != []:
             for xi in px:
                 if ((xi, y_lb) not in intersections) and y_lb <= xi <= y_ub:
-                    intersections.append([xi, y_lb])
+                    intersections.append([xi, y_lb, (index_c + 4), [2]])
             
     if y - r <= y_ub <= y + r:
         a = 1
@@ -140,7 +140,7 @@ def box_circles(x_lb, x_ub, y_lb, y_ub, circle) -> list:
         if px != []:
             for xi in px:
                 if ((xi, y_ub) not in intersections) and y_lb <= xi <= y_ub:
-                    intersections.append([xi, y_ub])
+                    intersections.append([xi, y_ub, (index_c + 4), [3]])
     
     return intersections
 
@@ -148,14 +148,14 @@ def box_circles(x_lb, x_ub, y_lb, y_ub, circle) -> list:
 
 
 
-def circles_circles(c1, c2) -> list:
+def circles_circles(circles : list, c1_index : int, c2_index : int) -> list:
     '''
     This function takes two circles and returns there intersection points.
     :param c1: The first circle considered.
     :param c2: The second circle considered.
     '''
-    x0, y0, r0 = c1
-    x1, y1, r1 = c2
+    x0, y0, r0 = circles[c1_index]
+    x1, y1, r1 = circles[c2_index]
 
     dx = x1 - x0
     dy = y1 - y0
@@ -188,11 +188,11 @@ def circles_circles(c1, c2) -> list:
     rx = -dy * h / dist
     ry = dx * h / dist
 
-    p1 = [float(xm + rx), float(ym + ry)]
-    p2 = [float(xm - rx), float(ym - ry)]
+    p1 = [float(xm + rx), float(ym + ry), (c1_index + 4), (c2_index + 4)]
+    p2 = [float(xm - rx), float(ym - ry), (c1_index + 4), (c2_index + 4)]
     
     # Tangent circles: only one intersection
-    if np.isclose(h, 0):
+    if abs(h) < 1e-4:
         return [p1]
 
     return [p1, p2]
@@ -204,6 +204,49 @@ def circles_circles(c1, c2) -> list:
 # These definitions are there to create the convex hull of the set of points using the LP.
 
 # In[ ]:
+
+def update_arcs(arcs : list, TwoPoints : list) -> list:
+    '''
+    This function takes arcs and new points and then connects the points that seem feasible.
+    '''
+    if len(arcs) == 0:
+        return [TwoPoints[1], TwoPoints[0]]
+    for arc in arcs:
+        if (arc[0] <= TwoPoints[0]) and (TwoPoints[1] <= arc[1]):
+
+        
+
+
+def preliminary_cuts(feasible_points : list, circles : list) -> list[list]:
+    '''
+    This definition takes a set of feasible points in the form of [x,y, circle, circle/box bound].
+    It then sees for every circle the intersections and connects the points that should be connected.
+    Lastly, it adds the box extremes to the graph that is the closest.
+    :param feasible_points: All of the feasible points and where they come from.
+    '''
+    # We first sort the points to all of the circles/sets. 
+    Sets = []
+    n = len(circles) + 4
+    circle_points = [[]]* n
+    for p in feasible_points:
+        circle_points[p[2]].append(p)
+        circle_points[p[3]].append(p)
+
+    # For each circle we connect points that enclose a feasible part
+   
+
+        
+
+    
+        
+        
+
+
+
+
+    return Sets
+
+
 
 
 def create_conv_region(points: list, solutions: list) -> list:
@@ -330,10 +373,10 @@ def angle_points_custom(p1, p2, direction):
     angle = math.atan2(dy, dx)
 
     reference_angles = [
-        math.pi,         # 0: Right
-        math.pi/2,         # 1: Left
-        0, # 2: Down
-        3*math.pi / 2      # 3: Up
+        math.pi,            # 0: Up
+        math.pi/2,          # 1: Left
+        0,                  # 2: Down
+        3*math.pi / 2       # 3: right
     ]
 
     if direction not in range(4):
@@ -676,9 +719,13 @@ def feas_region_box_GS(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
     
     # We now look at all of the intersections between the circles and the square
     points = [[x_lb, y_lb], [x_lb, y_ub], [x_ub, y_lb], [x_ub, y_ub]]
-    for circle in circles_used:
-        point = box_circles(x_lb, x_ub, y_lb, y_ub, circle)
+    m = len(circles_used)
+    arcs = [[]] * m
+
+    for circle in range(m):
+        point, updated_arcs = box_circles(x_lb, x_ub, y_lb, y_ub, circle[m], arcs[m])
         #print(f"We are looking at the circle: {circle} and it produces points :{point}")
+        arcs[m] = updated_arcs
         for p in point:
             #print(f"Point {p} is not in the list of points: {points}? {p not in points}")
             if p not in points:
