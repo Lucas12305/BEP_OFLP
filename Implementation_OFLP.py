@@ -760,7 +760,7 @@ def feas_region_box_GS(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
     #We now create the new convex feasible region
     pch, dp = create_conv_region_GS(points)
     
-    if plot == True:
+    if plot == True: 
         plot_box_GS(x_lb,x_ub,y_lb,y_ub, circles, points, pch, trc, rc)
     
     return pch, dp
