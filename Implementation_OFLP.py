@@ -725,9 +725,8 @@ def feas_region_box_GS(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
     arcs = [[]] * m
 
     for circle in range(m):
-        point, updated_arcs = box_circles(x_lb, x_ub, y_lb, y_ub, circles_used[circle], arcs[circle])
+        point = box_circles(x_lb, x_ub, y_lb, y_ub, circles_used, circle)
         #print(f"We are looking at the circle: {circle} and it produces points :{point}")
-        arcs[m] = updated_arcs
         for p in point:
             #print(f"Point {p} is not in the list of points: {points}? {p not in points}")
             if p not in points:
