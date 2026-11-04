@@ -725,7 +725,7 @@ def feas_region_box_GS(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
     arcs = [[]] * m
 
     for circle in range(m):
-        point, updated_arcs = box_circles(x_lb, x_ub, y_lb, y_ub, circle[m], arcs[m])
+        point, updated_arcs = box_circles(x_lb, x_ub, y_lb, y_ub, circles_used[circle], arcs[circle])
         #print(f"We are looking at the circle: {circle} and it produces points :{point}")
         arcs[m] = updated_arcs
         for p in point:
