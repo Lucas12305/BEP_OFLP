@@ -61,8 +61,8 @@ def generate_points(x_lb : float, x_ub : float, y_lb : float, y_ub : float) -> l
     :param y_ub: The highest y of the box.
     '''
     points = []
-    x = np.linspace(x_lb, x_ub, (x_ub - x_lb) / 100)
-    y = np.linspace(y_lb, y_ub, (y_ub - y_lb) / 100)
+    x = np.linspace(x_lb, x_ub, 100)
+    y = np.linspace(y_lb, y_ub, 100)
     for i in x:
         for j in y:
             points.append([i,j])
@@ -109,7 +109,7 @@ def box_circles(x_lb, x_ub, y_lb, y_ub, circles : list, index_c : int) -> list:
         if py != []:
             for yi in py:
                 if ((x_lb, yi) not in intersections) and y_lb <= yi <= y_ub:
-                    intersections.append([x_lb, yi, (index_c + 4), 0])
+                    intersections.append([x_lb, yi])
     
     if x - r <= x_ub <= x + r:
         a = 1
@@ -119,7 +119,7 @@ def box_circles(x_lb, x_ub, y_lb, y_ub, circles : list, index_c : int) -> list:
         if py != []:
             for yi in py:
                 if ((x_ub, yi) not in intersections) and y_lb <= yi <= y_ub:
-                    intersections.append([x_ub, yi, (index_c + 4), [1]])
+                    intersections.append([x_ub, yi])
     
     if y - r <= y_lb <= y + r:
         a = 1
@@ -129,7 +129,7 @@ def box_circles(x_lb, x_ub, y_lb, y_ub, circles : list, index_c : int) -> list:
         if px != []:
             for xi in px:
                 if ((xi, y_lb) not in intersections) and y_lb <= xi <= y_ub:
-                    intersections.append([xi, y_lb, (index_c + 4), [2]])
+                    intersections.append([xi, y_lb])
             
     if y - r <= y_ub <= y + r:
         a = 1
@@ -139,7 +139,7 @@ def box_circles(x_lb, x_ub, y_lb, y_ub, circles : list, index_c : int) -> list:
         if px != []:
             for xi in px:
                 if ((xi, y_ub) not in intersections) and y_lb <= xi <= y_ub:
-                    intersections.append([xi, y_ub, (index_c + 4), [3]])
+                    intersections.append([xi, y_ub])
     
     return intersections
 
@@ -187,8 +187,8 @@ def circles_circles(circles : list, c1_index : int, c2_index : int) -> list:
     rx = -dy * h / dist
     ry = dx * h / dist
 
-    p1 = [float(xm + rx), float(ym + ry), (c1_index + 4), (c2_index + 4)]
-    p2 = [float(xm - rx), float(ym - ry), (c1_index + 4), (c2_index + 4)]
+    p1 = [float(xm + rx), float(ym + ry)]
+    p2 = [float(xm - rx), float(ym - ry)]
     
     # Tangent circles: only one intersection
     if abs(h) < 1e-4:
@@ -340,6 +340,7 @@ def create_conv_region_GS(points : list) -> list:
         angle, dist = angle_points(min_y, p)
         p.append(angle)
         p.append(dist)
+    
     points_GS.sort(key=lambda p: (p[2], p[3]))
     # We add the first point and delete it from points
     sorted_points.append(points_GS[0])
@@ -630,8 +631,8 @@ def feas_region_box_LP(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
     
     # We now look at all of the intersections between the circles and the square
     points = [(x_lb, y_lb), (x_lb, y_ub), (x_ub, y_lb), (x_ub, y_ub)]
-    for circle in circles_used:
-        point = box_circles(x_lb, x_ub, y_lb, y_ub, circle)
+    for i in range(len(circles_used)):
+        point = box_circles(x_lb, x_ub, y_lb, y_ub, circles_used, i)
         #print(f"We are looking at the circle: {circle} and it produces points :{point}")
         for p in point:
             #print(f"Point {p} is not in the list of points: {points}? {p not in points}")
@@ -647,7 +648,7 @@ def feas_region_box_LP(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
             elif ((c1[0] - c2[0]) ** 2) + ((c1[1] - c2[1]) ** 2) >= c1[2] ** 2 + c2[2] ** 2:
                 continue
             else:
-                intersections = circles_circles(c1,c2)
+                intersections = circles_circles(circles,i,j)
             for point in intersections:
                 if point not in points:
                     if x_lb <= point[0] <= x_ub and y_lb <= point[1] <= y_ub:
@@ -661,10 +662,10 @@ def feas_region_box_LP(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
                 break
 
     #We now create the new convex feasible region
-    planes = create_conv_region(points, solutions, circles)
+    planes = create_conv_region(points, solutions)
     
     if plot == True:
-        plot_box_GS(x_lb,x_ub,y_lb,y_ub, circles, points, planes, trc, rc)
+        plot_box_LP(x_lb,x_ub,y_lb,y_ub, circles, points, planes, trc, rc)
     
     #return None
     return points, planes
@@ -741,7 +742,8 @@ def feas_region_box_GS(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
             elif ((c1[0] - c2[0]) ** 2) + ((c1[1] - c2[1]) ** 2) >= c1[2] ** 2 + c2[2] ** 2:
                 continue
             else:
-                intersections = circles_circles(c1,c2)
+                intersections = circles_circles(circles,i,j)
+                
             for point in intersections:
                 if point not in points:
                     if x_lb <= point[0] <= x_ub and y_lb <= point[1] <= y_ub:
@@ -755,7 +757,6 @@ def feas_region_box_GS(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
                 #print(f"We found a point {p}, that is in the inside of circle {c}")
                 points.remove(p)
                 break
-
     #We now create the new convex feasible region
     pch, dp = create_conv_region_GS(points)
     
