@@ -97,6 +97,7 @@ def box_circles(x_lb, x_ub, y_lb, y_ub, circles : list, index_c : int) -> list:
     :param y_ub: The highest y of the box.
     :param circle: The circle that we are considering
     '''
+    print(f"This is the index:{index_c} and this is the circle: {circles[index_c]}")
     x, y, r = circles[index_c]
     intersections = []
 
