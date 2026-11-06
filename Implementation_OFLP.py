@@ -82,13 +82,16 @@ def angle_points(refP : list, oP : list) -> tuple:
     return radians, distance
 
 
+def angle_to_points(circle : list, angle : float) -> list:
+
+
 # ## Calculating intersections
 # The following definitions are for calculating intersections in the main program of the code
 
 # In[ ]:
 
 
-def box_circles(x_lb, x_ub, y_lb, y_ub, circles : list, index_c : int) -> list:
+def box_circles(x_lb, x_ub, y_lb, y_ub, circles : list, index_c : int, circles_belong_point : list) -> list:
     '''
     This function takes a box and a circle and returns the intersections that this circle has with the box.
     :param x_lb: The lowest x of the box.
@@ -108,8 +111,11 @@ def box_circles(x_lb, x_ub, y_lb, y_ub, circles : list, index_c : int) -> list:
         py = solve_abc_form(a,b,c)
         if py != []:
             for yi in py:
-                if ((x_lb, yi) not in intersections) and y_lb <= yi <= y_ub:
-                    intersections.append([x_lb, yi])
+                p = [x_lb, yi]
+                if (p not in intersections) and y_lb <= yi <= y_ub:
+                    intersections.append(p)
+                if (p not in circles_belong_point[0]) and y_lb <= yi <= y_ub:
+                    circles_belong_point[0].append(p)
     
     if x - r <= x_ub <= x + r:
         a = 1
@@ -118,8 +124,11 @@ def box_circles(x_lb, x_ub, y_lb, y_ub, circles : list, index_c : int) -> list:
         py = solve_abc_form(a,b,c)
         if py != []:
             for yi in py:
-                if ((x_ub, yi) not in intersections) and y_lb <= yi <= y_ub:
-                    intersections.append([x_ub, yi])
+                p = [x_lb, yi]
+                if (p not in intersections) and y_lb <= yi <= y_ub:
+                    intersections.append(p)
+                if (p not in circles_belong_point[1]) and y_lb <= yi <= y_ub:
+                    circles_belong_point[1].append(p)
     
     if y - r <= y_lb <= y + r:
         a = 1
@@ -128,8 +137,11 @@ def box_circles(x_lb, x_ub, y_lb, y_ub, circles : list, index_c : int) -> list:
         px = solve_abc_form(a,b,c)
         if px != []:
             for xi in px:
-                if ((xi, y_lb) not in intersections) and y_lb <= xi <= y_ub:
-                    intersections.append([xi, y_lb])
+                p = [x_lb, yi]
+                if (p not in intersections) and x_lb <= xi <= x_ub:
+                    intersections.append(p)
+                if (p not in circles_belong_point[2]) and x_lb <= xi <= x_ub:
+                    circles_belong_point[2].append(p)
             
     if y - r <= y_ub <= y + r:
         a = 1
@@ -138,10 +150,13 @@ def box_circles(x_lb, x_ub, y_lb, y_ub, circles : list, index_c : int) -> list:
         px = solve_abc_form(a,b,c)
         if px != []:
             for xi in px:
-                if ((xi, y_ub) not in intersections) and y_lb <= xi <= y_ub:
-                    intersections.append([xi, y_ub])
+                p = [x_lb, yi]
+                if (p not in intersections) and x_lb <= xi <= x_ub:
+                    intersections.append(p)
+                if (p not in circles_belong_point[3]) and x_lb <= xi <= x_ub:
+                    circles_belong_point[3].append(p)
     
-    return intersections
+    return intersections, circles_belong_point
 
 
 
@@ -218,23 +233,70 @@ def update_arcs(arcs : list, TwoPoints : list) -> list:
 
         
 
-
-def preliminary_cuts(feasible_points : list, circles : list) -> list[list]:
+def preliminary_cuts(feasible_points, circles_belong_points : list, circles : list) -> list[list]:
     '''
     This definition takes a set of feasible points in the form of [x,y, circle, circle/box bound].
     It then sees for every circle the intersections and connects the points that should be connected.
     Lastly, it adds the box extremes to the graph that is the closest.
     :param feasible_points: All of the feasible points and where they come from.
+    :param circles_belong_points: This is a list with for each circle or bound a list with which points it has created.
+    :param circles: These are the 4 box bounds and then all of the circles.
     '''
-    # We first sort the points to all of the circles/sets. 
-    Sets = []
-    n = len(circles) + 4
-    circle_points = [[]]* n
-    for p in feasible_points:
-        circle_points[p[2]].append(p)
-        circle_points[p[3]].append(p)
+    # We have for each side and for each circle points that belong to the circle.
+    # We want to see which points we have to connect and which we don't
+    # We do this with the following
+    m = len(circles_belong_points)
+    connections = [[]]*m
+    for sp in range(4,m):
+        set_of_points = circles_belong_points[sp]
+        n = len(set_of_points)
+        if n <= 1:
+            continue
+        else:
+            a_p = []
+            for p in set_of_points:
+                a_p.append([p[0], p[1], angle_points(circles[sp], p1)[0]])
+            
+            
+            # How do we sort, we want to sort such that the angle increases.
+            a_p.sort()
+            for p in range(n):
+                p1, p2 = a_p[p], a_p[(p + 1) % n]
+                p_middle = angle_to_points(( (p2[2] - p1[2]) / 2 ) % (2 * math.pi), circles[sp])
+                # We now check if p_middle is inside some circle
+                for c in circles:
+                    if not interior_circle(p,c)
+                        p_middle_inside = True
+                        break
+                if not p_middle_inside:
+                    connections[sp].append([p1,p2])
 
-    # For each circle we connect points that enclose a feasible part
+    # We now have a list of all of the connections inside the circles. 
+    # We now want to connect the points such that we create seperate shapes.
+    sets = [feasible_points[0]]]
+    for p in range(1, len(feasible_points)):
+        numb_sets = len(sets)
+        add_to_set = None
+        for set in sets[numb_sets]:
+            if p in set:
+                add_to_set = set
+        if add_to_set == None:
+            sets.append(p)
+            add_to_set = sets[-1]
+
+        # We have 2 cases
+        # Case 1: p already belongs to a set, we then search for an addition to this set because of this point p.
+        # Subcase 1a : There is one extra point, we add it
+        # Subcase 1b : There are 2 or more points, this means that in that point some circles coincide in such a way that more points are generated
+        #              We copy the set in the amount of sets with points there are with one point added to each one
+        # Case 2: p does not belong to a set so then we add it and try to find 2 points to each side of the point.
+
+
+
+
+
+
+
    
 
         
@@ -630,12 +692,16 @@ def feas_region_box_LP(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
         circles_used.remove(circles_used[index])
     
     # We now look at all of the intersections between the circles and the square
+    m = len(circles_used) + 4
     points = [(x_lb, y_lb), (x_lb, y_ub), (x_ub, y_lb), (x_ub, y_ub)]
+    points_belong_circle = [[]]*m
     for i in range(len(circles_used)):
-        point = box_circles(x_lb, x_ub, y_lb, y_ub, circles_used, i)
+        point, points_belong_circle = box_circles(x_lb, x_ub, y_lb, y_ub, circles_used, i, points_belong_circle)
         #print(f"We are looking at the circle: {circle} and it produces points :{point}")
         for p in point:
             #print(f"Point {p} is not in the list of points: {points}? {p not in points}")
+            if p not in points_belong_circle[i+4]:
+                points_belong_circle[i+4].append(p)
             if p not in points:
                 points.append(p)
 
@@ -651,15 +717,16 @@ def feas_region_box_LP(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
                 intersections = circles_circles(circles,i,j)
             for point in intersections:
                 if point not in points:
-                    if x_lb <= point[0] <= x_ub and y_lb <= point[1] <= y_ub:
-                        points.append(point)
+                    interior = False
+                    if (x_lb <= point[0] <= x_ub) and (y_lb <= point[1] <= y_ub):
+                        for c in circles_used:
+                            if interior_circle(point, c) == True:
+                                interior = True
+                        if (not interior):
+                            points_belong_circle[i+4].append(point)
+                            points_belong_circle[j+4].append(point)
+                            points.append(point)
 
-    #Lastly we look if the points are in the interior of a circle
-    for p in points.copy():
-        for c in circles_used:
-            if interior_circle(p, c) == True:
-                points.remove(p)
-                break
 
     #We now create the new convex feasible region
     planes = create_conv_region(points, solutions)
@@ -721,15 +788,16 @@ def feas_region_box_GS(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
         circles_used.remove(circles_used[index])
     
     # We now look at all of the intersections between the circles and the square
-    points = [[x_lb, y_lb], [x_lb, y_ub], [x_ub, y_lb], [x_ub, y_ub]]
-    m = len(circles_used)
-    arcs = [[]] * m
-
-    for circle in range(m):
-        point = box_circles(x_lb, x_ub, y_lb, y_ub, circles_used, circle)
+    m = len(circles_used) + 4
+    points = [(x_lb, y_lb), (x_lb, y_ub), (x_ub, y_lb), (x_ub, y_ub)]
+    points_belong_circle = [[]]*m
+    for i in range(len(circles_used)):
+        point, points_belong_circle = box_circles(x_lb, x_ub, y_lb, y_ub, circles_used, i, points_belong_circle)
         #print(f"We are looking at the circle: {circle} and it produces points :{point}")
         for p in point:
             #print(f"Point {p} is not in the list of points: {points}? {p not in points}")
+            if p not in points_belong_circle[i+4]:
+                points_belong_circle[i+4].append(p)
             if p not in points:
                 points.append(p)
 
@@ -743,20 +811,19 @@ def feas_region_box_GS(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
                 continue
             else:
                 intersections = circles_circles(circles,i,j)
-                
             for point in intersections:
                 if point not in points:
-                    if x_lb <= point[0] <= x_ub and y_lb <= point[1] <= y_ub:
-                        points.append(point)
+                    interior = False
+                    if (x_lb <= point[0] <= x_ub) and (y_lb <= point[1] <= y_ub):
+                        for c in circles_used:
+                            if interior_circle(point, c) == True:
+                                interior = True
+                        if (not interior):
+                            points_belong_circle[i+4].append(point)
+                            points_belong_circle[j+4].append(point)
+                            points.append(point)
 
-
-    #Lastly we look if the points are in the interior of a circle
-    for p in points.copy():
-        for c in circles_used:
-            if interior_circle(p, c) == True:
-                #print(f"We found a point {p}, that is in the inside of circle {c}")
-                points.remove(p)
-                break
+                        
     #We now create the new convex feasible region
     pch, dp = create_conv_region_GS(points)
     
