@@ -242,9 +242,6 @@ def preliminary_cuts(feasible_points, circles_belong_points : list, circles : li
     :param circles_belong_points: This is a list with for each circle or bound a list with which points it has created.
     :param circles: These are the 4 box bounds and then all of the circles.
     '''
-    # We have for each side and for each circle points that belong to the circle.
-    # We want to see which points we have to connect and which we don't
-    # We do this with the following
     m = len(circles_belong_points)
     connections = [[]]*m
     for sp in range(4,m):
