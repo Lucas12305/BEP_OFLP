@@ -16,8 +16,8 @@ usage() {
     sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
 }
 
-MODE=1
-PLOT=0
+MODE=0
+PLOT=1
 TIME_LIMIT=""
 INSTANCES=()
 
