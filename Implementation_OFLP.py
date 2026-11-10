@@ -773,14 +773,19 @@ def feas_region_box_LP(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
                             points.append(point)
 
 
+    # We now split the points into convex hulls, i.e. the preliminary cut
+    subset_points = preliminary_cuts(points_belong_circle, circles, x_lb, x_ub, y_lb, y_ub)
+    
     #We now create the new convex feasible region
-    planes = create_conv_region(points, solutions)
+    planes = [[]] * len(subset_points)
+    for p in range(len(planes)):
+        planes[p] = create_conv_region(subset_points[p], solutions)
     
     if plot == True:
-        plot_box_LP(x_lb,x_ub,y_lb,y_ub, circles, points, planes, trc, rc)
+        for p in range(len(planes)):
+            plot_box_LP(x_lb,x_ub,y_lb,y_ub, circles, subset_points[p], planes[p], trc, rc)
     
-    #return None
-    return points, planes
+    return subset_points, planes
 
 
 
@@ -874,18 +879,23 @@ def feas_region_box_GS(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
                             points_belong_circle[j+4].append(point)
                             points.append(point)
 
-                        
+    # We now split the points into convex hulls, i.e. the preliminary cut
+    subset_points = preliminary_cuts(points_belong_circle, circles, x_lb, x_ub, y_lb, y_ub)
+    
     #We now create the new convex feasible region
-    pch, dp = create_conv_region_GS(points)
+    pch = [[]] * len(subset_points)
+    dp = [[]] * len(subset_points)
+    for p in range(len(subset_points)):
+        pch[p], dp[p] = create_conv_region_GS(subset_points[p], solutions)
+                       
     
     if plot == True: 
-        plot_box_GS(x_lb,x_ub,y_lb,y_ub, circles, points, pch, trc, rc)
+        for p in range(len(subset_points)):
+            plot_box_GS(x_lb,x_ub,y_lb,y_ub, circles, subset_points[p], pch[p], trc, rc)
     
     return pch, dp
 
 
-# ## Smart cuts
-# These definitions are for making smart cuts in the convex hulls.
 
 # In[ ]:
 
