@@ -9,6 +9,9 @@
 #   ./run.sh --mode 1 --plot --time-limit 600 ofl_2_100i ofl_3_100i
 #   ./run.sh initialized_instances/ofl_2_100*.gms
 
+# how to run? 'bash run.sh ofl_2_100i'
+
+
 # The folder in the repository where the text files (and plots) get saved
 OUT_DIR="results"
 
@@ -16,8 +19,8 @@ usage() {
     sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
 }
 
-MODE=0
-PLOT=1
+MODE=1
+PLOT=0
 TIME_LIMIT=""
 INSTANCES=()
 

@@ -146,13 +146,22 @@ def create_LP(x_lb : float, x_ub : float, y_lb : float, y_ub : float, circles : 
     ObnFacilities_y = [OFP.addVar(vtype='C', lb=y_lb, ub=y_ub, name=f"y_{i}") for i in range(facilities)]
     for i in range(facilities):
         var = [ObnFacilities_x[i], ObnFacilities_y[i]]
-        feas_region_constraint(x_lb, x_ub, y_lb, y_ub, circles, mode, OFP, var)
         # The minimal distance between the facilities has to be added to OFP, and a facility does not need a distance to itself
         for j in range(i + 1, facilities):
             var2 = [ObnFacilities_x[j], ObnFacilities_y[j]]
             OFP.addCons(distance(var, var2) >= min_fac_dist, f'MinDistF{i}_F{j}')
     create_objective(OFP, ObnFacilities_x,ObnFacilities_y, circles)
     return OFP
+
+def generate_heuristic_solution(OFP, time_limit)-> float:
+    '''
+    This function creates a first heuristic solution for the instance of the obnoxious facility location problem.
+    '''
+    OFP.setParam('limits/time', time_limit)
+    OFP.optimize()
+    sol = OFP.getBestSol()
+    Init_sol = OFP.getSolVal(sol, var['L'])
+    return Init_sol
 
 
 # ## Reading and plotting the solution
@@ -227,10 +236,14 @@ def plot_solution(OFP, instance : dict, save_path : str = None) -> None:
         print(f"The plot has been saved to {save_path}")
     return None
 
+def update_LP(OFP, circles, x_lb, x_ub, y_lb, y_ub, mode, facilities, time_limit) -> None:
+    for var in facilities:
+        feas_region_constraint(x_lb, x_ub, y_lb, y_ub, circles, mode, OFP, var)
+    return OFP
 
 # ## Running
 
-def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None, time_limit : float = None) -> None:
+def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None, presolve_limit : float = 1000, time_limit : float = None) -> None:
     '''
     This functions runs our program
     :param instance: The instance that we want to solve, as given by read_instance.
@@ -244,21 +257,25 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
     y_lb, y_ub = instance['y_bounds']
     min_FF_dist = instance['ff_sq_bounds'][0]
     communities = instance['communities']
-    #Init_sol = generate_a_solution(facilities, communities, x_lb, x_ub, y_lb, y_ub, min_FF_dist, communities)
-    Init_sol = 0
+    OFP = create_LP(x_lb, x_ub, y_lb, y_ub, communities, facilities, min_FF_dist, mode)
+    Init_sol = generate_heuristic_solution(facilities, communities, x_lb, x_ub, y_lb, y_ub, min_FF_dist, time_limit)
+
     circles = []
     for i in communities:
         circles.append([i[0], i[1], Init_sol])
-
+    
+    OFP = update_LP(OFP, circles, x_lb, x_ub, y_lb, y_ub, mode, facilities)
     start = time.perf_counter()
-    OFP = create_LP(x_lb, x_ub, y_lb, y_ub, circles, facilities, min_FF_dist, mode)
     if time_limit is not None:
         OFP.setParam('limits/time', time_limit)
+    else:
+        OFP.setParam('limits/time', (24 * 3600))
     OFP.optimize()
     OFP.printStatistics()
     OFP.printBestSol()
     total_time = time.perf_counter() - start
 
+    
     # A short summary at the end, so that the result is easy to find in the text file
     print("=" * 60)
     print("Summary")
