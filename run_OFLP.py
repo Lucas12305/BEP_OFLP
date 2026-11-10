@@ -113,14 +113,15 @@ def feas_region_constraint(x_lb, x_ub, y_lb, y_ub, circles, method : int, model,
     if method == 0:
         solutions = IO.generate_points(x_lb, x_ub, y_lb, y_ub)
         b,A = IO.feas_region_box_LP(x_lb, x_ub, y_lb, y_ub, circles, solutions)
-    sorted_points, deleted_points = IO.feas_region_box_GS(x_lb, x_ub, y_lb, y_ub, circles)
-    if len(deleted_points) == 0:
-        n = len(sorted_points)
-        p1, p2 = sorted_points[0], sorted_points[math.ceil(n/2)]
-        x1, x2 = p1[0], p1[1]
-        y1, y2 = p2[0], p2[1]
-        deleted_points = [[x1 + ((x2 - x1) / 2), y1 + ((y2 - y1) / 2)]]
-    A, b = points_to_cons(sorted_points, deleted_points[0])
+    else:
+        sorted_points, deleted_points = IO.feas_region_box_GS(x_lb, x_ub, y_lb, y_ub, circles)
+        if len(deleted_points) == 0:
+            n = len(sorted_points)
+            p1, p2 = sorted_points[0], sorted_points[math.ceil(n/2)]
+            x1, x2 = p1[0], p1[1]
+            y1, y2 = p2[0], p2[1]
+            deleted_points = [[x1 + ((x2 - x1) / 2), y1 + ((y2 - y1) / 2)]]
+        A, b = points_to_cons(sorted_points, deleted_points[0])
     for i in range(len(b)):
         model.addCons((A[i][0] * var[0] + A[i][1] * var[1]) <= b[i], f'Convex hull constraint {i} for {var}')
     return None
@@ -237,6 +238,9 @@ def plot_solution(OFP, instance : dict, save_path : str = None) -> None:
     return None
 
 def update_LP(OFP, circles, x_lb, x_ub, y_lb, y_ub, mode, facilities, time_limit) -> None:
+    '''
+    This function adds the communities constraints to the model.
+    '''
     for var in facilities:
         feas_region_constraint(x_lb, x_ub, y_lb, y_ub, circles, mode, OFP, var)
     return OFP
