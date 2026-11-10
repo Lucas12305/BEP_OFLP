@@ -1125,4 +1125,3 @@ def cutting_convex_hull(x_lb : float, x_ub : float, y_lb : float, y_ub : float, 
         print(f"Box 1 has the following cycle {b1}, and has {b1_not_used}")
         print(f"Box 2 has the following cycle {b2}, and has {b2_not_used}")
     return b1, b1_not_used, b2, b2_not_used
-
