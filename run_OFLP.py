@@ -262,7 +262,7 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
     min_FF_dist = instance['ff_sq_bounds'][0]
     communities = instance['communities']
     OFP = create_LP(x_lb, x_ub, y_lb, y_ub, communities, facilities, min_FF_dist, mode)
-    Init_sol = generate_heuristic_solution(facilities, communities, x_lb, x_ub, y_lb, y_ub, min_FF_dist, time_limit)
+    Init_sol = generate_heuristic_solution(OFP, presolve_limit)
 
     circles = []
     for i in communities:
@@ -319,7 +319,7 @@ def main() -> None:
     path = find_instance(args.instance)
     instance = read_instance(path.name)
     print(f"Instance: {path.name}", flush=True)
-    run(instance, args.mode, plot=args.plot_file is not None, plot_file=args.plot_file, time_limit=args.time_limit)
+    run(instance, args.mode, plot=args.plot_file is not None, plot_file=args.plot_file, presolve_limit=600,  time_limit=args.time_limit)
     return None
 
 

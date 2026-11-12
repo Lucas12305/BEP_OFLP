@@ -20,9 +20,13 @@ usage() {
 }
 
 MODE=1
+# 0 is LP, 1 is GS
 PLOT=0
+# 0 is off, 1 is on
 TIME_LIMIT=""
+# maximum amount of time the program can run for
 INSTANCES=()
+
 
 while [ $# -gt 0 ]; do
     case "$1" in

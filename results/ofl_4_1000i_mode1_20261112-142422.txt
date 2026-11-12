@@ -1,0 +1,11 @@
+Instance: ofl_4_1000i.gms
+Traceback (most recent call last):
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/run_OFLP.py", line 327, in <module>
+    main()
+    ~~~~^^
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/run_OFLP.py", line 322, in main
+    run(instance, args.mode, plot=args.plot_file is not None, plot_file=args.plot_file, time_limit=args.time_limit)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/run_OFLP.py", line 265, in run
+    Init_sol = generate_heuristic_solution(facilities, communities, x_lb, x_ub, y_lb, y_ub, min_FF_dist, time_limit)
+TypeError: generate_heuristic_solution() takes 2 positional arguments but 8 were given
