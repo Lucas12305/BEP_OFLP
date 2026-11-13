@@ -138,11 +138,11 @@ def box_circles(x_lb, x_ub, y_lb, y_ub, circles : list, index_c : int, circles_b
         c = y ** 2 - 2 * y * y_lb + y_lb ** 2 + x ** 2 - r ** 2
         px = solve_abc_form(a,b,c)
         if px != []:
-            for xi in px:
+            for yi in px:
                 p = [x_lb, yi]
-                if (p not in intersections) and x_lb <= xi <= x_ub:
+                if (p not in intersections) and x_lb <= yi <= x_ub:
                     intersections.append(p)
-                if (p not in circles_belong_point[2]) and x_lb <= xi <= x_ub:
+                if (p not in circles_belong_point[2]) and x_lb <= yi <= x_ub:
                     circles_belong_point[2].append(p)
             
     if y - r <= y_ub <= y + r:
@@ -151,11 +151,11 @@ def box_circles(x_lb, x_ub, y_lb, y_ub, circles : list, index_c : int, circles_b
         c = y ** 2 - 2 * y * y_ub + y_ub ** 2 + x ** 2 - r ** 2
         px = solve_abc_form(a,b,c)
         if px != []:
-            for xi in px:
+            for yi in px:
                 p = [x_lb, yi]
-                if (p not in intersections) and x_lb <= xi <= x_ub:
+                if (p not in intersections) and x_lb <= yi <= x_ub:
                     intersections.append(p)
-                if (p not in circles_belong_point[3]) and x_lb <= xi <= x_ub:
+                if (p not in circles_belong_point[3]) and x_lb <= yi <= x_ub:
                     circles_belong_point[3].append(p)
     
     return intersections, circles_belong_point
@@ -867,7 +867,7 @@ def feas_region_box_GS(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
             elif ((c1[0] - c2[0]) ** 2) + ((c1[1] - c2[1]) ** 2) >= c1[2] ** 2 + c2[2] ** 2:
                 continue
             else:
-                intersections = circles_circles(circles,i,j)
+                intersections = circles_circles(circles_used,i,j)
             for point in intersections:
                 if type(point) != list:
                     n_point = [point]
