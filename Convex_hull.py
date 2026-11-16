@@ -87,6 +87,11 @@ def angle_to_points(circle : list, radians : float) -> list:
     y = circle[1] + circle[2] * math.sin(radians)
     return x,y
 
+
+
+    
+        
+
 # ## Calculating intersections
 # The following definitions are for calculating intersections in the main program of the code
 
@@ -241,120 +246,6 @@ def at_bound(point, x_lb, x_ub, y_lb, y_ub) -> bool:
     else:
         return False
         
-
-def preliminary_cuts(circles_belong_points : list, circles : list, x_lb : float, x_ub : float, y_lb : float, y_ub : float) -> list:
-    '''
-    This definition takes a set of feasible points in the form of [x,y, circle, circle/box bound].
-    It then sees for every circle the intersections and connects the points that should be connected.
-    Lastly, it adds the box extremes to the graph that is the closest.
-    :param circles_belong_points: This is a list with for each circle or bound a list with which points it has created.
-    :param circles: These are the 4 box bounds and then all of the circles.
-    '''
-    m = len(circles_belong_points)
-    connections = [[]] * m
-    for sp in range(1):
-        set_of_points = circles_belong_points[sp]
-        n = len(set_of_points)
-        if n <= 1:
-            continue
-        else:
-            set_of_points.sort(lambda  point : point[1])
-        for i in range(n):
-            p1, p2 = set_of_points[i], set_of_points[(i + 1) % n]
-            p_middle = (p2 + p1) / 2
-            p_middle_inside = False
-            for c in circles:
-                if interior_circle(p_middle, c):
-                    p_middle_inside = True
-                    break
-            if not p_middle_inside:
-                connections[i].append([p1,p2])
-
-
-    for sp in range(4,m):
-        set_of_points = circles_belong_points[sp]
-        n = len(set_of_points)
-        if n <= 1:
-            continue
-        else:
-            a_p = []
-            for p in set_of_points:
-                a_p.append([p[0], p[1], angle_points(circles[sp], p1)[0]])
-            
-            
-            # How do we sort, we want to sort such that the angle increases.
-            a_p.sort(key=lambda point: point[2])
-            for p in range(n):
-                p1, p2 = a_p[p], a_p[(p + 1) % n]
-                p_middle = angle_to_points(circles[sp], ((p2[2] - p1[2]) / 2 ) % (2 * math.pi))
-                # We now check if p_middle is inside some circle
-                p_middle_inside = False
-                for c in circles:
-                    if interior_circle(p_middle,c):
-                        p_middle_inside = True
-                        break
-                if not p_middle_inside:
-                    connections[sp].append([p1,p2])
-
-    # We now have a list of all of the sorted connections inside the circles. 
-    # This means that we can pick a point and then go both ways, one way is that we go up in index, and the other we go down.
-    # This way we handle cases in which a point is made by two circles that intersect exaclty at a point
-    subsets_of_hulls = []
-    connections_left = []
-    for con in connections:
-        connections_left.append(con)
-    
-    while len(connections_left) > 0:
-        # In each iteration we pick a random connection [c1, c2]
-        cons_con = connections_left[0]
-        p1, p2 = cons_con
-
-        # We first check if either are at a bound, then for this ci it stops.
-        if at_bound(p1, x_lb, x_ub, y_lb, y_ub):
-            stop_iter_clockwise = True
-        else:
-            stop_iter_clockwise = False
-        if at_bound(p2, x_lb, x_ub, y_lb, y_ub):
-            stop_iter_anti_clock = True
-        else:
-            stop_iter_anti_clock = False
-
-        # We look for a connection with c2 as the start and for a connection with c1 as the end. 
-        n = 2 * len(connections_left)
-        t = 0
-        set_i = [p1, p2]
-        while (not stop_iter_anti_clock) and (not stop_iter_clockwise) and (t <= n):
-            first, last = set_i[0], set_i[-1]
-            it = 0
-            while ((not found_f) or (not found_l)) and it <= n / 2:
-                con = connections_left[it]
-                if con[0] == last:
-                    set_i.append(con[1])
-                    connections_left.remove(con)
-                    found_l = True
-                elif con[1] == first:
-                    set_i.insert(0,con[0])
-                    connections_left.remove(con)
-                    found_f = True
-                it += 1
-
-            # We keep this going until both are at a boundary or if they come to the same point, i.e. connect to make a cycle.
-            if at_bound(set_i[0], x_lb, x_ub, y_lb, y_ub):
-                stop_iter_clockwise = True
-            if at_bound(set_i[-1], x_lb, x_ub, y_lb, y_ub):
-                stop_iter_anti_clock = True
-            if set_i[0] == set_i[-1]:
-                stop_iter_anti_clock = True
-                stop_iter_clockwise = True
-
-            # We then found a set, add this to the 
-            subsets_of_hulls.append(set_i)
-            t += 1
-
-
-
-    return subsets_of_hulls
-
 
 
 
@@ -553,135 +444,6 @@ def create_conv_region_GS_know_points(known_cycle : list, points : list, rotatio
 # ## Visualization
 # The following definitions are used for visualization of what is going on inside the definitions.
 
-# In[ ]:
-
-
-def plot_box_LP(x_lb,x_ub,y_lb,y_ub, circles, intersections, planes : list, trc :bool = False, rc : list=[]) -> None:
-    '''
-    This makes a plot for the box that gets cut using the LP.
-    '''
-    # Create figure and axes
-    fig, ax = plt.subplots()
-
-    # Create a geometric box (Rectangle)
-    # Arguments: (lower-left x, y), width, height
-    box = patches.Rectangle((x_lb, y_lb), x_ub-x_lb, y_ub - y_lb, linewidth=3, edgecolor='black', facecolor='none')
-    ax.add_patch(box)
-        
-    # Create the circles
-    # Arguments: (center x, y), radius
-    for c in circles:
-        circle = patches.Circle((c[0], c[1]), c[2], linewidth=1, edgecolor='black', fill = False)
-        ax.add_patch(circle)
-    # Add shapes to the axes
-
-    for p in intersections:
-        ax.scatter(p[0], p[1], s=20, c='red', marker='o')
-    if trc == True:
-        for c in rc:
-            circle = patches.Circle((c[0], c[1]), c[2], linewidth=1, edgecolor='lightgray', fill = False)
-            ax.add_patch(circle)
-            ax.scatter(c[0], c[1], s=1, c='blue', marker='o', label='Center Point')
-        
-    for plane in planes:
-        p0, p1, p2 = plane
-    
-        if abs(p1) > 1e-10:
-            x_vals = np.linspace(x_lb, x_ub, 200)
-            y_line = -(p0 * x_vals + p2) / p1
-    
-            # Keep everything inside the box
-            y_line = np.clip(y_line, y_lb, y_ub)
-    
-            if p1 < 0:
-                # Shade below line
-                ax.fill_between(
-                    x_vals, y_lb, y_line,
-                    alpha=1, color = 'blue'
-                )
-            else:
-                # Shade above line
-                ax.fill_between(
-                    x_vals, y_line, y_ub,
-                    alpha=1, color = 'blue'
-                )
-    
-            ax.plot(x_vals, y_line, color = 'blue')
-    
-        else:
-            # Vertical line
-            if abs(p0) > 1e-10:
-                x_line = -p2 / p0
-    
-                if x_lb <= x_line <= x_ub:
-                    ax.vlines(x_line, y_lb, y_ub, color='blue')
-    
-                    if p0 < 0:
-                        # x <= x_line
-                        ax.axvspan(x_lb, x_line, alpha=1, color = 'blue')
-                    else:
-                        # x >= x_line
-                        ax.axvspan(x_line, x_ub, alpha=1, color = 'blue')
-        
-    # Set limits and equal aspect ratio
-    ax.set_xlim(x_lb - abs(x_lb-x_ub)/2, x_ub + abs(x_lb-x_ub)/2)
-    ax.set_ylim(y_lb - abs(y_lb-y_ub)/2, y_ub + abs(y_lb-y_ub)/2)
-    ax.set_aspect('equal')
-        
-    # Show the plot
-    plt.grid(True)
-    plt.show()
-    return None
-
-
-
-def plot_box_GS(x_lb,x_ub,y_lb,y_ub, circles, intersections, sorted_points : list, trc :bool = False, rc : list=[]) -> None:
-    '''
-    This makes a plot for the box that gets cut using the LP.
-    '''
-    # Create figure and axes
-    fig, ax = plt.subplots()
-
-    # Create a geometric box (Rectangle)
-    # Arguments: (lower-left x, y), width, height
-    box = patches.Rectangle((x_lb, y_lb), x_ub-x_lb, y_ub - y_lb, linewidth=3, edgecolor='black', facecolor='none')
-    ax.add_patch(box)
-        
-    # Create the circles
-    # Arguments: (center x, y), radius
-    for c in circles:
-        circle = patches.Circle((c[0], c[1]), c[2], linewidth=1, edgecolor='black', fill = False)
-        ax.add_patch(circle)
-    
-    # Add shapes to the axes
-    for p in intersections:
-        #print(f"We have a point {p}")
-        ax.scatter(p[0], p[1], s=70, c='green', zorder=21)
-    
-    if trc == True:
-        for c in rc:
-            circle = patches.Circle((c[0], c[1]), c[2], linewidth=1, edgecolor='lightgray', fill = False)
-            ax.add_patch(circle)
-            ax.scatter(c[0], c[1], s=1, c='blue', marker='o', label='Center Point')
-        
-    for i in range(len(sorted_points)):
-        p1 = sorted_points[i]
-        p2 = sorted_points[(i + 1) % len(sorted_points)]
-        ax.plot(
-            [p1[0], p2[0]],
-            [p1[1], p2[1]],
-            color='blue'
-        )
-  
-    # Set limits and equal aspect ratio
-    ax.set_xlim(x_lb - abs(x_lb-x_ub)/2, x_ub + abs(x_lb-x_ub)/2)
-    ax.set_ylim(y_lb - abs(y_lb-y_ub)/2, y_ub + abs(y_lb-y_ub)/2)
-    ax.set_aspect('equal')
-        
-    # Show the plot
-    plt.grid(True)
-    plt.show()
-    return None
 
 
 # ## Creating a convex hull
@@ -873,8 +635,6 @@ def feas_region_box_LP_cutting(x_lb : float, x_ub : float, y_lb : float, y_ub : 
     
     for p in range(len(planes)):
         planes[p] = create_conv_region(subset_points[p], solutions)
-    
-    planes = create_conv_region(points, solutions)
 
     if plot == True:
         for p in range(len(planes)):

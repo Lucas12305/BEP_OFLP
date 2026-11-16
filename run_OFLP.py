@@ -5,330 +5,6 @@
 # This document contains the code to run an instance from the command line, see run.sh.
 # The definitions are the ones from Running.ipynb, together with the plot of the solution and a main that reads the command line.
 
-# ## Initial imports
-
-import re
-import sys
-import math
-import time
-import argparse
-from pathlib import Path
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from pyscipopt import Model, quicksum
-import networkx as nx
-from tqdm import tqdm
-import math
-
-import Implementation_OFLP as IO
-
-
-# ## Reading the instances
-
-try:
-    BASE_DIR = Path(__file__).parent
-except NameError:
-    BASE_DIR = Path.cwd()
-INSTANCE_DIR = BASE_DIR / "initialized_instances"
-
-SET_RE    = re.compile(r"(\w+)\s+\w+\s*/\s*(\d+)\*(\d+)\s*/")
-PARAM_RE  = re.compile(r"community_([xy])\('(\d+)'\)\s*=\s*([-+0-9.eE]+)\s*;")
-SCALAR_RE = re.compile(r"Parameter\s+(\w+)\s*/\s*([-+0-9.eE]+)\s*/")
-BOUND_RE  = re.compile(r"\b(x|y|facility_facility_sq_distance)\.(lo|up)\([^)]*\)\s*=\s*([^;]+);")
-
-
-def read_instance(filename: str) -> dict:
-    '''Reads a GAMS instance: facilities, communities, box bounds and facility-facility bounds.'''
-    text = (INSTANCE_DIR / filename).read_text()
-
-    sets = {name: int(end) - int(start) + 1 for name, start, end in SET_RE.findall(text)}
-
-    coords = {"x": {}, "y": {}}
-    for axis, idx, value in PARAM_RE.findall(text):
-        coords[axis][int(idx)] = float(value)
-    communities = [(coords["x"][k], coords["y"][k]) for k in range(1, sets["j"] + 1)]
-
-    scalars = {name: float(value) for name, value in SCALAR_RE.findall(text)}
-    bounds = {}
-    for var, side, value in BOUND_RE.findall(text):
-        value = value.strip()
-        bounds.setdefault(var, {})[side] = scalars.get(value) if value in scalars else float(value)
-
-    return {
-        "facilities": sets["i"],
-        "x_bounds": (bounds["x"]["lo"], bounds["x"]["up"]),
-        "y_bounds": (bounds["y"]["lo"], bounds["y"]["up"]),
-        "ff_sq_bounds": (bounds["facility_facility_sq_distance"]["lo"],
-                         bounds["facility_facility_sq_distance"]["up"]),
-        "communities": communities
-    }
-
-
-def natural_key(path):
-    '''Sorts "instance2" before "instance10" by comparing numbers as numbers.'''
-    return [int(part) if part.isdigit() else part for part in re.split(r"(\d+)", path.name)]
-
-
-instances = sorted(
-    (f for f in INSTANCE_DIR.iterdir() if f.is_file()),
-    key=natural_key,
-)
-
-
-def find_instance(name : str) -> Path:
-    '''
-    Looks up an instance in the instance folder. The name can be given with or without .gms.
-    :param name: The name of the instance, for example ofl_2_100i.
-    '''
-    for f in instances:
-        if name in (f.name, f.stem):
-            return f
-    raise SystemExit(f"Instance '{name}' was not found in {INSTANCE_DIR}.")
-
-
-# ## Creating the model
-
-def points_to_cons(points : list, p_inside : list) -> tuple[list, list]:
-    A = []
-    b = []
-    n = len(points)
-    # We want constriants of the form Ax <= b, where x = [x,y]
-    for i in range(n):
-        x1,y1,x2,y2 = points[i][0], points[i][1], points[(i + 1) % n][0], points[(i + 1) % n][1]
-        new_A = np.array([y2 - y1 , x1 - x2])
-        new_b = np.array(x1 * y2 - x2 * y1)
-        if new_A @ p_inside > new_b:
-            A.append(-new_A)
-            b.append(- new_b)
-        else:
-            A.append(new_A)
-            b.append(new_b)
-    return A, b
-
-
-def feas_region_constraint(x_lb, x_ub, y_lb, y_ub, circles, method : int, model, var) -> None:
-    '''
-    This function creates the constraint for the feasible region.
-    :param method: This is either 0 or 1 and it denotes the methods, 0 is LP, and 1 is GS.
-    '''
-    if method == 0:
-        solutions = IO.generate_points(x_lb, x_ub, y_lb, y_ub)
-        b,A = IO.feas_region_box_LP(x_lb, x_ub, y_lb, y_ub, circles, solutions)
-    else:
-        sorted_points, deleted_points = IO.feas_region_box_GS(x_lb, x_ub, y_lb, y_ub, circles)
-        if len(deleted_points) == 0:
-            n = len(sorted_points)
-            p1, p2 = sorted_points[0], sorted_points[math.ceil(n/2)]
-            x1, x2 = p1[0], p1[1]
-            y1, y2 = p2[0], p2[1]
-            deleted_points = [[x1 + ((x2 - x1) / 2), y1 + ((y2 - y1) / 2)]]
-        A, b = points_to_cons(sorted_points, deleted_points[0])
-    for i in range(len(b)):
-        model.addCons((A[i][0] * var[0] + A[i][1] * var[1]) <= b[i], f'Convex hull constraint {i} for {var}')
-    return None
-
-
-def distance(p1, p2) -> float:
-    return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
-
-
-def create_objective(model, var_x, var_y, circles):
-    L = model.addVar(vtype='C', lb=0, ub=None, name='L')
-    for j, c in enumerate(circles):
-        for i, (x, y) in enumerate(zip(var_x, var_y)):
-            model.addCons(distance(c,(x,y)) >= L, f"MaxDistance_{i}_With{c[0],c[1]}")
-    model.setObjective(L,'maximize')
-    return None
-
-
-def create_LP(x_lb : float, x_ub : float, y_lb : float, y_ub : float, circles : list, facilities : int, min_fac_dist : float, mode : int) -> None:
-
-    OFP = Model(f'OFP problem with {facilities} facilities (with minimal distance {min_fac_dist}) and {len(circles)} communities')
-    ObnFacilities_x = [OFP.addVar(vtype='C', lb=x_lb, ub=x_ub, name=f"x_{i}") for i in range(facilities)]
-    ObnFacilities_y = [OFP.addVar(vtype='C', lb=y_lb, ub=y_ub, name=f"y_{i}") for i in range(facilities)]
-    for i in range(facilities):
-        var = [ObnFacilities_x[i], ObnFacilities_y[i]]
-        # The minimal distance between the facilities has to be added to OFP, and a facility does not need a distance to itself
-        for j in range(i + 1, facilities):
-            var2 = [ObnFacilities_x[j], ObnFacilities_y[j]]
-            OFP.addCons(distance(var, var2) >= min_fac_dist, f'MinDistF{i}_F{j}')
-    create_objective(OFP, ObnFacilities_x,ObnFacilities_y, circles)
-    return OFP
-
-def get_feas_points(circles, x_lb, x_ub, y_lb, y_ub) -> float:
-    # We create 1000 possible facility locations, we then check for each which are feasible to get points to try to fit the number of facilities.
-    poss_fac = []
-    x_coords = np.linspace(x_lb,x_ub,100)
-    y_coords = np.linspace(y_lb,y_ub,100)
-    for x in x_coords:
-        for y in y_coords:
-            p = [x,y]
-            feas = True
-            for c in circles:
-                if IO.interior_circle(p,c):
-                    feas = False
-                    break
-            if feas:
-                poss_fac.append(p)
-    return poss_fac
-
-def find_n_clique(points, fac_fac_dist, n) -> list:
-    '''
-    This definition finds an n-clique in a graph G. If it finds one it terminates immediatly and returns it.
-    :param G: The graph that is considered.
-    :param n: The size of the clique that is being searched for.
-    '''
-    if n <= 0:
-        return []
-    if n == 1:
-        return [0] if len(points) > 0 else []
-    if len(points) < n:
-        return []
-    
-    G = nx.Graph()
-    pts = np.array(points)
-    d = ((pts[:, None, :] - pts[None, :, :]) ** 2).sum(axis=2)
-    ii, jj = np.where(np.triu(d >= fac_fac_dist, k=1))
-    G.add_edges_from(zip(ii.tolist(), jj.tolist()))
-    G = nx.k_core(G, n - 1)
-
-    for v in G:
-        if G.degree(v) < n - 1:
-            continue
-        else:
-            clique = [v]
-            neighbours = []
-            for w in G.neighbors(v):
-                if w > v:
-                    neighbours.append(w)
-            level_neighbours = [neighbours]
-            clique_explored = False
-            while not clique_explored:
-                if len(clique) == n:
-                    return clique
-                if len(clique) + len(level_neighbours[-1]) < n:
-                    clique.pop()
-                    level_neighbours.pop()
-                    if len(clique) == 0:
-                        clique_explored = True
-                else:
-                    w = level_neighbours[-1].pop()
-                    if G.degree(w) < n - 1:
-                        continue
-                    poss_vert = []
-                    for wi in level_neighbours[-1]:
-                        if G.has_edge(w, wi):
-                            poss_vert.append(wi)
-                    clique.append(w)
-                    level_neighbours.append(poss_vert)
-    return []
-
-def create_init_sol(facilities, communities, x_lb, x_ub, y_lb, y_ub, fac_fac_dist, r_guess : float=0) -> float:
-    # The idea of the algorithm is to decrease the radius until we find a feasible radius, this way we create a good intial solution.
-    feas_sol_found = False
-    max_iter = 1e3 * len(communities)
-    t = 0
-    if r_guess == 0:
-        r = 2.5 / math.sqrt(len(communities))
-    else:
-        r = r_guess
-    with tqdm(total=max_iter, desc="Shrinking r") as pbar:
-        while (not feas_sol_found) and (t < max_iter):
-            circles = []
-            for i in communities:
-                circles.append([i[0], i[1], r])
-            points = get_feas_points(circles, x_lb, x_ub, y_lb, y_ub)
-            # We now try to fit the facilities in the points while maintaining the fac_fac_distance
-            clique = find_n_clique(points, fac_fac_dist, facilities)
-            if clique == []:
-                r *= 0.95
-                pbar.update(1)
-            else:
-                feas_sol_found = True
-                return r, clique
-    return r, clique
-
-
-# ## Reading and plotting the solution
-
-def get_solution(OFP, instance : dict) -> tuple | None:
-    '''
-    This reads the facilities and the objective L from the best solution of the model.
-    It returns None if SCIP did not find a solution.
-    :param OFP: The model that has been optimized.
-    :param instance: The instance that has been solved, as given by read_instance.
-    '''
-    if OFP.getNSols() == 0:
-        return None
-    sol = OFP.getBestSol()
-    var = {v.name: v for v in OFP.getVars()}
-    facilities = [[OFP.getSolVal(sol, var[f"x_{i}"]), OFP.getSolVal(sol, var[f"y_{i}"])] for i in range(instance['facilities'])]
-    L = OFP.getSolVal(sol, var['L'])
-    return facilities, L
-
-
-def plot_solution(OFP, instance : dict, save_path : str = None) -> None:
-    '''
-    This makes a plot of the solution that SCIP has found for the obnoxious facility location problem.
-    Around every community it draws a grey circle with the radius of the objective, the facilities are placed outside of the grey area.
-    :param OFP: The model that has been optimized.
-    :param instance: The instance that has been solved, as given by read_instance.
-    :param save_path: If this is given the plot is saved to this file instead of shown.
-    '''
-    solution = get_solution(OFP, instance)
-    if solution is None:
-        print("There is no solution to plot.")
-        return None
-    facilities, L = solution
-
-    x_lb, x_ub = instance['x_bounds']
-    y_lb, y_ub = instance['y_bounds']
-    communities = instance['communities']
-
-    # Create figure and axes
-    fig, ax = plt.subplots()
-
-    # Create a geometric box (Rectangle)
-    box = patches.Rectangle((x_lb, y_lb), x_ub - x_lb, y_ub - y_lb, linewidth=3, edgecolor='black', facecolor='none')
-    ax.add_patch(box)
-
-    # Plot the communities with a grey circle around them, the facilities have to be outside of the grey area
-    # L is a squared distance, so the radius is the square root of L
-    # The fill is see-through, so overlapping circles get darker and every circle stays visible
-    for c in communities:
-        circle = patches.Circle((c[0], c[1]), np.sqrt(L), linewidth=0.8, edgecolor='gray', facecolor=(0.5, 0.5, 0.5, 0.15))
-        ax.add_patch(circle)
-        ax.scatter(c[0], c[1], s=10, c='black', marker='o', zorder=20)
-
-    # Plot the facilities
-    for i, f in enumerate(facilities):
-        ax.scatter(f[0], f[1], s=70, c='red', zorder=21)
-        ax.annotate(f"F{i}", (f[0], f[1]), textcoords="offset points", xytext=(6, 6), zorder=22)
-
-    # Set limits and equal aspect ratio
-    ax.set_xlim(x_lb - abs(x_lb - x_ub) / 2, x_ub + abs(x_lb - x_ub) / 2)
-    ax.set_ylim(y_lb - abs(y_lb - y_ub) / 2, y_ub + abs(y_lb - y_ub) / 2)
-    ax.set_aspect('equal')
-    ax.set_title(f"L = {L:.4f}, radius = {np.sqrt(L):.4f}")
-
-    # Show the plot, or save it when a file is given
-    plt.grid(True)
-    if save_path is None:
-        plt.show()
-    else:
-        fig.savefig(save_path, dpi=150)
-        plt.close(fig)
-        print(f"The plot has been saved to {save_path}")
-    return None
-
-def update_LP(OFP, circles, x_lb, x_ub, y_lb, y_ub, mode, facilities, time_limit) -> None:
-    '''
-    This function adds the communities constraints to the model.
-    '''
-    for var in facilities:
-        feas_region_constraint(x_lb, x_ub, y_lb, y_ub, circles, mode, OFP, var)
-    return OFP
 
 # ## Running
 
@@ -348,28 +24,180 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
     y_lb, y_ub = instance['y_bounds']
     min_FF_dist = instance['ff_sq_bounds'][0]
     communities = instance['communities']
-    Init_sol = create_init_sol(facilities, communities, x_lb, x_ub, y_lb, y_ub, min_FF_dist)
+    Init_sol = creating_and_guessing(facilities, communities, x_lb, x_ub, y_lb, y_ub, min_FF_dist)
     circles = []
     for i in communities:
         circles.append([i[0], i[1], Init_sol])
-    if mode == 0:
-        if precutting == 0:
+    if precutting == 0:
             # This means that we only have one box that we have shrunken using the LP method
-            points, planes = IO.feas_region_box_LP(x_lb,x_ub,y_lb,y_ub,circles)
-        else: # Precutting == 1
-            # We divide into the different sets
-            points, planes = IO.feas_region_box_LP_cutting(x_lb,x_ub,y_lb,y_ub,circles)
-        poss_places = len(points)
-        
-
-    if mode == 1:
-        if precutting == 0:
-            # This means that we only have one box that we have shrunken using the GS method
-            pch, dp = IO.feas_region_box_GS(x_lb,x_ub,y_lb,y_ub,circles)
-        else: # Precutting == 1
-            # We divide into the different sets
-            intial_sets = IO.feas_region_box_GS_cutting(x_lb,x_ub,y_lb,y_ub,circles)
+            OFP = create_LP(x_lb, x_ub, y_lb, y_ub, communities, facilities, min_FF_dist, mode)
+            OFP = update_LP(OFP, circles, x_lb, x_ub, y_lb, y_ub, mode, facilities)
             
+            start = time.perf_counter()
+            if time_limit is not None:
+                OFP.setParam('limits/time', time_limit)
+            else:
+                OFP.setParam('limits/time', (3600))
+            OFP.optimize()
+            OFP.printStatistics()
+            OFP.printBestSol()
+            total_time = time.perf_counter() - start
+        
+            
+            # A short summary at the end, so that the result is easy to find in the text file
+            print("=" * 60)
+            print("Summary")
+            print(f"Facilities: {facilities}, communities: {len(communities)}, mode: {mode}, precutting: {precutting}, seperator: {seperator}")
+            print(f"Status: {OFP.getStatus()}, total time: {total_time:.2f} s")
+            solution = get_solution(OFP, instance)
+            if solution is None:
+                print("No solution was found.")
+            else:
+                facility_points, L = solution
+                print(f"Objective L (squared distance): {L}")
+                print(f"Radius sqrt(L): {np.sqrt(L)}")
+                for i, f in enumerate(facility_points):
+                    print(f"Facility {i}: x = {f[0]}, y = {f[1]}")
+            print("=" * 60, flush=True)
+        
+            if plot == True:
+                plot_solution(OFP, instance, plot_file)
+            return None
+
+
+
+    else: # Precutting == 1
+        # We divide into the different sets
+        if mode == 0:
+            points, planes = IO.feas_region_box_LP_cutting(x_lb,x_ub,y_lb,y_ub,circles)
+            poss_places = len(points)
+            subproblems_combinations = IO.combinations(facilities, poss_places)
+            best_found_sol = Init_sol
+            index_bfs = [-1]
+            # We now want to create all of the subproblem
+            OFP = {}
+            for i in range(len(subproblems_combinations)):
+                comb = subproblems_combinations[i]    
+                OFP[i] = Model(f'OFP_{i} problem with {facilities} facilities (with minimal distance {min_FF_dist}) and {len(circles)} communities and combinations {comb}.')
+                ObnFacilities_x = [OFP[i].addVar(vtype='C', lb=x_lb, ub=x_ub, name=f"x_{i}") for i in range(facilities)]
+                ObnFacilities_y = [OFP[i].addVar(vtype='C', lb=y_lb, ub=y_ub, name=f"y_{i}") for i in range(facilities)]
+                for i in range(facilities):
+                    var = [ObnFacilities_x[i], ObnFacilities_y[i]]
+                    # The minimal distance between the facilities has to be added to OFP, and a facility does not need a distance to itself
+                    for j in range(i + 1, facilities):
+                        var2 = [ObnFacilities_x[j], ObnFacilities_y[j]]
+                        OFP[i].addCons(distance(var, var2) >= min_FF_dist, f'MinDistF{i}_F{j}')
+                    
+                    # Now comes the extra step, here we specifically make it so that the facilities are in a certain spot
+                    for i in range(poss_places):
+                        if comb[i] != 0:
+                            comb[i] -= 1
+                            add_conv_hull_cons_precut_LP(OFP[i], ObnFacilities_x[i], ObnFacilities_y[i], planes[i])
+                            break
+                create_objective(OFP[i], ObnFacilities_x,ObnFacilities_y, circles, best_found_sol)
+                OFP[i].addCons()
+                if time_limit is not None:
+                    OFP[i].setParam('limits/time', time_limit)
+                else:
+                    OFP[i].setParam('limits/time', (3600))
+                OFP[i].optimize()
+                L = OFP[i].getObjVal() 
+                if L > best_found_sol:
+                    best_found_sol = L
+                    index_bfs = [i]
+                if L == best_found_sol:
+                    index_bfs = index_bfs + [i]
+
+            for j in index_bfs:
+                OFP[j].printStatistics()
+                OFP[j].printBestSol()
+                
+                # A short summary at the end, so that the result is easy to find in the text file
+                print("=" * 60)
+                print("Summary")
+                print(f"Facilities: {facilities}, communities: {len(communities)}, mode: {mode}, precutting: {precutting}, seperator: {seperator}")
+                print(f"Status: {OFP[j].getStatus()}, total time: {total_time:.2f} s")
+                solution = get_solution(OFP[j], instance)
+                if solution is None:
+                    print("No solution was found.")
+                else:
+                    facility_points, L = solution
+                    print(f"Objective L (squared distance): {L}")
+                    print(f"Radius sqrt(L): {np.sqrt(L)}")
+                    for i, f in enumerate(facility_points):
+                        print(f"Facility {i}: x = {f[0]}, y = {f[1]}")
+                print("=" * 60, flush=True)
+            
+                if plot == True:
+                    plot_solution(OFP[j], instance, plot_file)
+                return None         
+
+        else: # mode == 1
+            # We divide into the different sets
+            sorted_points, deleted_points = IO.feas_region_box_GS_cutting(x_lb,x_ub,y_lb,y_ub,circles)
+            poss_places = len(sorted_points)
+            subproblems_combinations = IO.combinations(facilities, poss_places)
+            best_found_sol = Init_sol
+            index_bfs = [-1]
+            # We now want to create all of the subproblem
+            OFP = {}
+            for i in range(len(subproblems_combinations)):
+                comb = subproblems_combinations[i]    
+                OFP[i] = Model(f'OFP_{i} problem with {facilities} facilities (with minimal distance {min_FF_dist}) and {len(circles)} communities and combinations {comb}.')
+                ObnFacilities_x = [OFP[i].addVar(vtype='C', lb=x_lb, ub=x_ub, name=f"x_{i}") for i in range(facilities)]
+                ObnFacilities_y = [OFP[i].addVar(vtype='C', lb=y_lb, ub=y_ub, name=f"y_{i}") for i in range(facilities)]
+                for i in range(facilities):
+                    var = [ObnFacilities_x[i], ObnFacilities_y[i]]
+                    # The minimal distance between the facilities has to be added to OFP, and a facility does not need a distance to itself
+                    for j in range(i + 1, facilities):
+                        var2 = [ObnFacilities_x[j], ObnFacilities_y[j]]
+                        OFP[i].addCons(distance(var, var2) >= min_FF_dist, f'MinDistF{i}_F{j}')
+                    
+                    # Now comes the extra step, here we specifically make it so that the facilities are in a certain spot
+                    for i in range(poss_places):
+                        if comb[i] != 0:
+                            comb[i] -= 1
+                            add_conv_hull_cons_precut_GS(OFP[i], ObnFacilities_x[i], ObnFacilities_y[i], poss_places[i])
+                            break
+                create_objective(OFP[i], ObnFacilities_x,ObnFacilities_y, circles, best_found_sol)
+                OFP[i].addCons()
+                if time_limit is not None:
+                    OFP[i].setParam('limits/time', time_limit)
+                else:
+                    OFP[i].setParam('limits/time', (3600))
+                OFP[i].optimize()
+                L = OFP[i].getObjVal() 
+                if L > best_found_sol:
+                    best_found_sol = L
+                    index_bfs = [i]
+                if L == best_found_sol:
+                    index_bfs = index_bfs + [i]
+
+            for j in index_bfs:
+                OFP[j].printStatistics()
+                OFP[j].printBestSol()
+                
+                # A short summary at the end, so that the result is easy to find in the text file
+                print("=" * 60)
+                print("Summary")
+                print(f"Facilities: {facilities}, communities: {len(communities)}, mode: {mode}, precutting: {precutting}, seperator: {seperator}")
+                print(f"Status: {OFP[j].getStatus()}, total time: {total_time:.2f} s")
+                solution = get_solution(OFP[j], instance)
+                if solution is None:
+                    print("No solution was found.")
+                else:
+                    facility_points, L = solution
+                    print(f"Objective L (squared distance): {L}")
+                    print(f"Radius sqrt(L): {np.sqrt(L)}")
+                    for i, f in enumerate(facility_points):
+                        print(f"Facility {i}: x = {f[0]}, y = {f[1]}")
+                print("=" * 60, flush=True)
+            
+                if plot == True:
+                    plot_solution(OFP[j], instance, plot_file)
+                return None     
+            
+
             
 
 
