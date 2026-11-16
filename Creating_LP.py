@@ -25,7 +25,12 @@ def feas_region_constraint(x_lb, x_ub, y_lb, y_ub, circles, method : int, model,
     '''
     if method == 0:
         solutions = IO.generate_points(x_lb, x_ub, y_lb, y_ub)
-        b,A = IO.feas_region_box_LP(x_lb, x_ub, y_lb, y_ub, circles, solutions)
+        planes = IO.feas_region_box_LP(x_lb, x_ub, y_lb, y_ub, circles, solutions)[1]
+        A = [[]]*len(planes)
+        b = [[]]*len(planes)
+        for i in range(len(planes)):
+            A[i] = planes[i][:2]
+            b[i] = planes[i][2]
     else:
         sorted_points, deleted_points = IO.feas_region_box_GS(x_lb, x_ub, y_lb, y_ub, circles)
         if len(deleted_points) == 0:
@@ -79,11 +84,12 @@ def add_conv_hull_cons_precut_GS(model, var_x, var_y, points) -> None:
     A,b = points_to_cons(points, p_ins)
     for i in range(len(b)):
         model.addCons((A[i][0] * var_x + A[i][1] * var_y) <= b[i], f'Convex hull constraint {i} for {[var_x,var_y]}')
+    return model
 
 def add_conv_hull_cons_precut_LP(model, var_x, var_y, planes) -> None:
-    for i in range(len(b)):
-        model.addCons((A[i][0] * var_x + A[i][1] * var_y) <= b[i], f'Convex hull constraint {i} for {[var_x,var_y]}')
-
+    for i in range(len(planes)):
+        model.addCons((planes[i][0] * var_x + planes[i][1] * var_y) <= planes[i][2], f'Convex hull constraint {i} for {[var_x,var_y]}')
+    return model
 
 def update_LP(OFP, circles, x_lb, x_ub, y_lb, y_ub, mode, facilities, time_limit) -> None:
     '''
