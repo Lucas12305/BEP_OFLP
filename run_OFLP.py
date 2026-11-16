@@ -41,7 +41,7 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
     y_lb, y_ub = instance['y_bounds']
     min_FF_dist = instance['ff_sq_bounds'][0]
     communities = instance['communities']
-    Init_sol = PC.creating_and_guessing(facilities, communities, x_lb, x_ub, y_lb, y_ub, min_FF_dist)
+    Init_sol = PC.create_init_sol(facilities, communities, x_lb, x_ub, y_lb, y_ub, min_FF_dist)
     circles = []
     for i in communities:
         circles.append([i[0], i[1], Init_sol])
@@ -94,9 +94,6 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
 
     else: # Precutting == 1
         # We divide into the different sets
-        
-        
-        
         if mode == 0:
             points, planes = IO.feas_region_box_LP_cutting(x_lb,x_ub,y_lb,y_ub,circles)
             poss_places = len(points)
@@ -104,8 +101,10 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
             best_found_sol = Init_sol
             index_bfs = [-1]
             # We now want to create all of the subproblem
+            print(f"We are going to be looking at {len(subproblems_combinations)} combinations. After the best possible solution will be pasted.")
             OFP = {}
-            for i in range(len(subproblems_combinations)):
+            pbar = tqdm(range(len(subproblems_combinations)), desc="Subproblems")
+            for i in pbar:
                 comb = subproblems_combinations[i]    
                 OFP[i] = Model(f'OFP_{i} problem with {facilities} facilities (with minimal distance {min_FF_dist}) and {len(circles)} communities and combinations {comb}.')
                 ObnFacilities_x = [OFP[i].addVar(vtype='C', lb=x_lb, ub=x_ub, name=f"x_{i}") for i in range(facilities)]
@@ -136,6 +135,7 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
                     index_bfs = [i]
                 if L == best_found_sol:
                     index_bfs = index_bfs + [i]
+                pbar.set_postfix(best_radius=f"{np.sqrt(best_found_sol):.4f}")
 
             for j in index_bfs:
                 OFP[j].printStatistics()
@@ -181,35 +181,36 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
             for i in range(len(subproblems_combinations)):
                 comb = subproblems_combinations[i]    
                 OFP[i] = Model(f'OFP_{i} problem with {facilities} facilities (with minimal distance {min_FF_dist}) and {len(circles)} communities and combinations {comb}.')
-                ObnFacilities_x = [OFP[i].addVar(vtype='C', lb=x_lb, ub=x_ub, name=f"x_{i}") for i in range(facilities)]
-                ObnFacilities_y = [OFP[i].addVar(vtype='C', lb=y_lb, ub=y_ub, name=f"y_{i}") for i in range(facilities)]
-                for i in range(facilities):
-                    var = [ObnFacilities_x[i], ObnFacilities_y[i]]
+                ObnFacilities_x = [OFP[i].addVar(vtype='C', lb=x_lb, ub=x_ub, name=f"x_{j}") for j in range(facilities)]
+                ObnFacilities_y = [OFP[i].addVar(vtype='C', lb=y_lb, ub=y_ub, name=f"y_{j}") for j in range(facilities)]
+                for l in range(facilities):
+                    var = [ObnFacilities_x[l], ObnFacilities_y[l]]
                     # The minimal distance between the facilities has to be added to OFP, and a facility does not need a distance to itself
-                    for j in range(i + 1, facilities):
-                        var2 = [ObnFacilities_x[j], ObnFacilities_y[j]]
-                        OFP[i].addCons(CLP.distance(var, var2) >= min_FF_dist, f'MinDistF{i}_F{j}')
+                    for k in range(l + 1, facilities):
+                        var2 = [ObnFacilities_x[k], ObnFacilities_y[k]]
+                        OFP[i].addCons(((var[0] - var2[0]) ** 2 + (var[1] - var2[1]) ** 2) >= min_FF_dist, f'MinDistF{l}_F{k}')
                     
                     # Now comes the extra step, here we specifically make it so that the facilities are in a certain spot
-                    for i in range(poss_places):
-                        if comb[i] != 0:
-                            comb[i] -= 1
-                            CLP.add_conv_hull_cons_precut_GS(OFP[i], ObnFacilities_x[i], ObnFacilities_y[i], poss_places[i])
+                    for m in range(poss_places):
+                        if comb[m] != 0:
+                            comb[m] -= 1
+                            CLP.add_conv_hull_cons_precut_GS(OFP[i], var[0], var[1], sorted_points[m])
                             break
                 CLP.create_objective(OFP[i], ObnFacilities_x,ObnFacilities_y, circles, best_found_sol)
-                OFP[i].addCons()
                 if time_limit is not None:
                     OFP[i].setParam('limits/time', time_limit)
                 else:
                     OFP[i].setParam('limits/time', (3600))
+                OFP[i].hideOutput()
                 OFP[i].optimize()
-                L = OFP[i].getObjVal() 
-                if L > best_found_sol:
-                    best_found_sol = L
-                    index_bfs = [i]
-                if L == best_found_sol:
-                    index_bfs = index_bfs + [i]
-
+                if OFP[i].getNSols() > 0:
+                    L = OFP[i].getObjVal()
+                    if L > best_found_sol:
+                        best_found_sol = L
+                        index_bfs = [i]
+                    if L == best_found_sol:
+                        index_bfs = index_bfs + [i]
+            
             for j in index_bfs:
                 OFP[j].printStatistics()
                 OFP[j].printBestSol()

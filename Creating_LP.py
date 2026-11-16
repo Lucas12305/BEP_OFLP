@@ -99,7 +99,7 @@ def add_conv_hull_cons_precut_GS(model, var_x, var_y, points) -> None:
     p1, p2 = points[0], points[math.ceil(n/2)]
     x1, x2 = p1[0], p1[1]
     y1, y2 = p2[0], p2[1]
-    p_ins = [[x1 + ((x2 - x1) / 2), y1 + ((y2 - y1) / 2)]]
+    p_ins = [x1 + ((x2 - x1) / 2), y1 + ((y2 - y1) / 2)]
     A,b = points_to_cons(points, p_ins)
     for i in range(len(b)):
         model.addCons((A[i][0] * var_x + A[i][1] * var_y) <= b[i], f'Convex hull constraint {i} for {[var_x,var_y]}')
