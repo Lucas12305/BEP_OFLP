@@ -246,22 +246,6 @@ def create_init_sol(facilities, communities, x_lb, x_ub, y_lb, y_ub, fac_fac_dis
                 pbar.update(1)
             else:
                 feas_sol_found = True
-                fig, ax = plt.subplots()
-                box = patches.Rectangle((x_lb, y_lb), x_ub-x_lb, y_ub - y_lb, linewidth=3, edgecolor='black', facecolor='none')
-                ax.add_patch(box)
-                for c in circles:
-                    circle = patches.Circle((c[0], c[1]), c[2], linewidth=1, edgecolor='black', fill = True)
-                    ax.add_patch(circle)
-                for p in clique:
-                    ax.scatter(points[p][0], points[p][1], s=20, c='red', marker='o')
-                # Set limits and equal aspect ratio
-                ax.set_xlim(x_lb - abs(x_lb-x_ub)/2, x_ub + abs(x_lb-x_ub)/2)
-                ax.set_ylim(y_lb - abs(y_lb-y_ub)/2, y_ub + abs(y_lb-y_ub)/2)
-                ax.set_aspect('equal')
-            
-                # Show the plot
-                plt.grid(True)
-                plt.show()
                 return r, clique
     return r, clique
 
