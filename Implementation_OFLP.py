@@ -771,27 +771,116 @@ def feas_region_box_LP(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
                             points_belong_circle[i+4].append(point)
                             points_belong_circle[j+4].append(point)
                             points.append(point)
-
-
-    # We now split the points into convex hulls, i.e. the preliminary cut
-    #subset_points = preliminary_cuts(points_belong_circle, circles, x_lb, x_ub, y_lb, y_ub)
-    
-    #We now create the new convex feasible region
-    #planes = [[]] * len(subset_points)
-    
-    #for p in range(len(planes)):
-        #planes[p] = create_conv_region(subset_points[p], solutions)
     
     planes = create_conv_region(points, solutions)
 
     if plot == True:
         plot_box_LP(x_lb,x_ub,y_lb,y_ub, circles, points, planes, trc, rc)
-        #for p in range(len(planes)):
-            #plot_box_LP(x_lb,x_ub,y_lb,y_ub, circles, subset_points[p], planes[p], trc, rc)
     
     return points, planes
 
 
+
+
+def feas_region_box_LP_cutting(x_lb : float, x_ub : float, y_lb : float, y_ub : float, circles : list[list], solutions : list ,epsilon : float = 1e-4, trc : bool = False, plot : bool = False) -> None:
+    '''
+    This definition takes a box and circles and returns the smallest convex polygon inside the box.
+    :param x_lb: lowest x of the box.
+    :param x_ub: highest x of the box.
+    :param y_lb: lowest y of the box.
+    :param y_ub: highest y of the box.
+    :param circles: A list of cirles, which are denoted as lists with (x,y,r)
+    :param trc: This is a bool which stand for track removed circles, this is to check if no circles are removed that cut of an additional piece.
+    :param plot: This is a bool which turns on or off the plot function.
+    '''
+    assert x_lb < x_ub or y_lb < y_ub, "Make sure that the upperbounds are higher than the lower bounds."
+    for circle in circles:
+        assert len(circle) == 3, "Make sure all circles have 3 parameters."    
+    rc = []
+    
+    # The following code first looks which circles are (partly inside our space), it could add some circles which are actually not in there
+    # due to it just using the bounds, but this is minimal.
+    circles_used = []
+    for circle in circles:
+        if (circle[0] + circle[2] <= x_lb - epsilon) or (circle[0] - circle[2] >= x_ub + epsilon) or (circle[1] - circle[2] >= y_ub + epsilon) or (circle[1] + circle[2] <= y_lb - epsilon):
+            if trc == True:
+                rc.append(circle)
+            continue
+        else:
+            if not circle in circles_used:
+                circles_used.append(circle)
+                
+
+    # The following code checks if there are circles inside circles that we then don't have to consider.
+    n = len(circles_used)
+    remove_indices = []
+    for i in range(n):
+        for j in range(i + 1,n):
+            c1 = circles_used[i]
+            c2 = circles_used[j]
+            if (j not in remove_indices) and ((((c1[0] - c2[0]) ** 2) + ((c1[1] - c2[1]) ** 2)) ** (1/2)) + (c2[2] ) <= (c1[2]):
+                remove_indices.append(j)
+            elif (i not in remove_indices) and ((((c1[0] - c2[0]) ** 2) + ((c1[1] - c2[1]) ** 2)) ** (1/2)) + (c1[2] ) <= (c2[2]):
+                remove_indices.append(i)
+    remove_indices.sort(reverse=True)
+    for index in remove_indices:
+        if trc == True:
+            rc.append(circles_used[index])
+        circles_used.remove(circles_used[index])
+    
+    # We now look at all of the intersections between the circles and the square
+    m = len(circles_used) + 4
+    points = [(x_lb, y_lb), (x_lb, y_ub), (x_ub, y_lb), (x_ub, y_ub)]
+    points_belong_circle = [[]]*m
+    for i in range(len(circles_used)):
+        point, points_belong_circle = box_circles(x_lb, x_ub, y_lb, y_ub, circles_used, i, points_belong_circle)
+        #print(f"We are looking at the circle: {circle} and it produces points :{point}")
+        for p in point:
+            #print(f"Point {p} is not in the list of points: {points}? {p not in points}")
+            if p not in points_belong_circle[i+4]:
+                points_belong_circle[i+4].append(p)
+            if p not in points:
+                points.append(p)
+
+    # We now look at all of the intersections between the circles
+    for i in range(n):
+        for j in range(i + 1,n):
+            c1, c2 = circles_used[i], circles_used[j]
+            if c1 == c2:
+                continue
+            elif ((c1[0] - c2[0]) ** 2) + ((c1[1] - c2[1]) ** 2) >= c1[2] ** 2 + c2[2] ** 2:
+                continue
+            else:
+                intersections = circles_circles(circles,i,j)
+            for point in intersections:
+                if point not in points:
+                    interior = False
+                    if (x_lb <= point[0] <= x_ub) and (y_lb <= point[1] <= y_ub):
+                        for c in circles_used:
+                            if interior_circle(point, c) == True:
+                                interior = True
+                        if (not interior):
+                            points_belong_circle[i+4].append(point)
+                            points_belong_circle[j+4].append(point)
+                            points.append(point)
+
+
+    # We now split the points into convex hulls, i.e. the preliminary cut
+    subset_points = preliminary_cuts(points_belong_circle, circles, x_lb, x_ub, y_lb, y_ub)
+    
+    #We now create the new convex feasible region
+    planes = [[]] * len(subset_points)
+    
+    for p in range(len(planes)):
+        planes[p] = create_conv_region(subset_points[p], solutions)
+    
+    planes = create_conv_region(points, solutions)
+
+    if plot == True:
+        for p in range(len(planes)):
+            plot_box_LP(x_lb,x_ub,y_lb,y_ub, circles, subset_points[p], planes[p], trc, rc)
+    
+    return points, planes
 
 
 
@@ -888,18 +977,118 @@ def feas_region_box_GS(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
                             points_belong_circle[j+4].append(point)
                             points.append(point)
 
-   # # We now split the points into convex hulls, i.e. the preliminary cut
-       #subset_points = preliminary_cuts(points_belong_circle, circles, x_lb, x_ub, y_lb, y_ub)
-       
-       #We now create the new convex feasible region
-       #pch = [[]] * len(subset_points)
-       #dp = [[]] * len(subset_points)
-       #for p in range(len(subset_points)):
-           #pch[p], dp[p] = create_conv_region_GS(subset_points[p], solutions)  
                         
     #We now create the new convex feasible region
     pch, dp = create_conv_region_GS(points)
     
+    if plot == True: 
+        plot_box_GS(x_lb,x_ub,y_lb,y_ub, circles, points, pch, trc, rc)
+    
+    return pch, dp
+
+
+def feas_region_box_GS_cutting(x_lb : float, x_ub : float, y_lb : float, y_ub : float, circles : list[list] ,epsilon : float = 1e-4, trc : bool = False, plot : bool = False) -> None:
+    '''
+    This definition takes a box and circles and returns the smallest convex polygon inside the box.
+    :param x_lb: lowest x of the box.
+    :param x_ub: highest x of the box.
+    :param y_lb: lowest y of the box.
+    :param y_ub: highest y of the box.
+    :param circles: A list of cirles, which are denoted as lists with (x,y,r)
+    :param trc: This is a bool which stand for track removed circles, this is to check if no circles are removed that cut of an additional piece.
+    :param plot: This is a bool which turns on or off the plot function.
+    '''
+    assert x_lb < x_ub or y_lb < y_ub, "Make sure that the upperbounds are higher than the lower bounds."
+    for circle in circles:
+        assert len(circle) == 3, "Make sure all circles have 3 parameters."    
+    rc = []
+    
+    # The following code first looks which circles are (partly inside our space), it could add some circles which are actually not in there
+    # due to it just using the bounds, but this is minimal.
+    circles_used = []
+    for circle in circles:
+        if (circle[0] + circle[2] <= x_lb - epsilon) or (circle[0] - circle[2] >= x_ub + epsilon) or (circle[1] - circle[2] >= y_ub + epsilon) or (circle[1] + circle[2] <= y_lb - epsilon):
+            if trc == True:
+                rc.append(circle)
+            continue
+        else:
+            if not circle in circles_used:
+                circles_used.append(circle)
+                
+
+    # The following code checks if there are circles inside circles that we then don't have to consider.
+    n = len(circles_used)
+    remove_indices = []
+    for i in range(n):
+        for j in range(i + 1,n):
+            c1 = circles_used[i]
+            c2 = circles_used[j]
+            if (j not in remove_indices) and ((((c1[0] - c2[0]) ** 2) + ((c1[1] - c2[1]) ** 2)) ** (1/2)) + (c2[2] ) <= (c1[2]):
+                remove_indices.append(j)
+            elif (i not in remove_indices) and ((((c1[0] - c2[0]) ** 2) + ((c1[1] - c2[1]) ** 2)) ** (1/2)) + (c1[2] ) <= (c2[2]):
+                remove_indices.append(i)
+    remove_indices.sort(reverse=True)
+    for index in remove_indices:
+        if trc == True:
+                rc.append(circles_used[index])
+        circles_used.remove(circles_used[index])
+    
+    # We now look at all of the intersections between the circles and the square
+    m = len(circles_used) + 4
+    points = [[x_lb, y_lb], [x_lb, y_ub], [x_ub, y_lb], [x_ub, y_ub]]
+    points_belong_circle = [[]]*m
+    for i in range(len(circles_used)):
+        point, points_belong_circle = box_circles(x_lb, x_ub, y_lb, y_ub, circles_used, i, points_belong_circle)
+        #print(f"We are looking at the circle: {circle} and it produces points :{point}")
+        for p in point:
+            #print(f"Point {p} is not in the list of points: {points}? {p not in points}")
+            if type(p) != list:
+                n_point = [p]
+                p = n_point
+            interior = False
+            for c in circles:
+                if interior_circle(p,c):
+                    interior = True
+                if not interior:
+                    if p not in points_belong_circle[i+4]:
+                        points_belong_circle[i+4].append(p)
+                    if p not in points:
+                        points.append(p)
+
+    # We now look at all of the intersections between the circles
+    for i in range(n):
+        for j in range(i + 1,n):
+            c1, c2 = circles_used[i], circles_used[j]
+            if c1 == c2:
+                continue
+            elif ((c1[0] - c2[0]) ** 2) + ((c1[1] - c2[1]) ** 2) >= c1[2] ** 2 + c2[2] ** 2:
+                continue
+            else:
+                intersections = circles_circles(circles_used,i,j)
+            for point in intersections:
+                if type(point) != list:
+                    n_point = [point]
+                    point = n_point
+                if point not in points:
+                    interior = False
+                    if (x_lb <= point[0] <= x_ub) and (y_lb <= point[1] <= y_ub):
+                        for c in circles_used:
+                            if interior_circle(point, c) == True:
+                                interior = True
+                        if (not interior):
+                            points_belong_circle[i+4].append(point)
+                            points_belong_circle[j+4].append(point)
+                            points.append(point)
+
+   # # We now split the points into convex hulls, i.e. the preliminary cut
+    subset_points = preliminary_cuts(points_belong_circle, circles, x_lb, x_ub, y_lb, y_ub)
+       
+    #We now create the new convex feasible region
+    pch = [[]] * len(subset_points)
+    dp = [[]] * len(subset_points)
+    for p in range(len(subset_points)):
+        pch[p], dp[p] = create_conv_region_GS(subset_points[p])  
+                        
     if plot == True: 
         plot_box_GS(x_lb,x_ub,y_lb,y_ub, circles, points, pch, trc, rc)
     

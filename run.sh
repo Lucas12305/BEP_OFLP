@@ -23,6 +23,10 @@ MODE=1
 # 0 is LP, 1 is GS
 PLOT=0
 # 0 is off, 1 is on
+PRECUTTING=0
+# 0 is off, 1 is on
+SEPERATOR=0
+# 0 is off, 1 is on
 TIME_LIMIT=""
 # maximum amount of time the program can run for
 INSTANCES=()
@@ -32,6 +36,8 @@ while [ $# -gt 0 ]; do
     case "$1" in
         --mode)       MODE="$2"; shift 2 ;;
         --plot)       PLOT=1; shift ;;
+        --precutting) PRECUTTING=1; shift ;;
+        --separator)  SEPERATOR=1; shift ;;
         --time-limit) TIME_LIMIT="$2"; shift 2 ;;
         -h|--help)    usage; exit 0 ;;
         -*)           echo "Unknown option: $1" >&2; usage >&2; exit 1 ;;
@@ -63,6 +69,12 @@ for INSTANCE in "${INSTANCES[@]}"; do
     ARGS=(--mode "$MODE")
     if [ "$PLOT" -eq 1 ]; then
         ARGS+=(--plot-file "${BASE}.png")
+    fi
+    if [ "$PRECUTTING" -eq 1 ]; then
+        ARGS+=(--precutting)
+    fi
+    if [ "$SEPERATOR" -eq 1 ]; then
+        ARGS+=(--separator)
     fi
     if [ -n "$TIME_LIMIT" ]; then
         ARGS+=(--time-limit "$TIME_LIMIT")

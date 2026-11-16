@@ -13,11 +13,13 @@ import math
 import time
 import argparse
 from pathlib import Path
-
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from pyscipopt import Model, quicksum
+import networkx as nx
+from tqdm import tqdm
+import math
 
 import Implementation_OFLP as IO
 
@@ -128,7 +130,7 @@ def feas_region_constraint(x_lb, x_ub, y_lb, y_ub, circles, method : int, model,
 
 
 def distance(p1, p2) -> float:
-    return (p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2
+    return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 
 def create_objective(model, var_x, var_y, circles):
@@ -154,15 +156,114 @@ def create_LP(x_lb : float, x_ub : float, y_lb : float, y_ub : float, circles : 
     create_objective(OFP, ObnFacilities_x,ObnFacilities_y, circles)
     return OFP
 
-def generate_heuristic_solution(OFP, time_limit)-> float:
+def get_feas_points(circles, x_lb, x_ub, y_lb, y_ub) -> float:
+    # We create 1000 possible facility locations, we then check for each which are feasible to get points to try to fit the number of facilities.
+    poss_fac = []
+    x_coords = np.linspace(x_lb,x_ub,100)
+    y_coords = np.linspace(y_lb,y_ub,100)
+    for x in x_coords:
+        for y in y_coords:
+            p = [x,y]
+            feas = True
+            for c in circles:
+                if IO.interior_circle(p,c):
+                    feas = False
+                    break
+            if feas:
+                poss_fac.append(p)
+    return poss_fac
+
+def find_n_clique(points, fac_fac_dist, n) -> list:
     '''
-    This function creates a first heuristic solution for the instance of the obnoxious facility location problem.
+    This definition finds an n-clique in a graph G. If it finds one it terminates immediatly and returns it.
+    :param G: The graph that is considered.
+    :param n: The size of the clique that is being searched for.
     '''
-    OFP.setParam('limits/time', time_limit)
-    OFP.optimize()
-    sol = OFP.getBestSol()
-    Init_sol = OFP.getSolVal(sol, var['L'])
-    return Init_sol
+    if n <= 0:
+        return []
+    if n == 1:
+        return [0] if len(points) > 0 else []
+    if len(points) < n:
+        return []
+    
+    G = nx.Graph()
+    pts = np.array(points)
+    d = ((pts[:, None, :] - pts[None, :, :]) ** 2).sum(axis=2)
+    ii, jj = np.where(np.triu(d >= fac_fac_dist, k=1))
+    G.add_edges_from(zip(ii.tolist(), jj.tolist()))
+    G = nx.k_core(G, n - 1)
+
+    for v in G:
+        if G.degree(v) < n - 1:
+            continue
+        else:
+            clique = [v]
+            neighbours = []
+            for w in G.neighbors(v):
+                if w > v:
+                    neighbours.append(w)
+            level_neighbours = [neighbours]
+            clique_explored = False
+            while not clique_explored:
+                if len(clique) == n:
+                    return clique
+                if len(clique) + len(level_neighbours[-1]) < n:
+                    clique.pop()
+                    level_neighbours.pop()
+                    if len(clique) == 0:
+                        clique_explored = True
+                else:
+                    w = level_neighbours[-1].pop()
+                    if G.degree(w) < n - 1:
+                        continue
+                    poss_vert = []
+                    for wi in level_neighbours[-1]:
+                        if G.has_edge(w, wi):
+                            poss_vert.append(wi)
+                    clique.append(w)
+                    level_neighbours.append(poss_vert)
+    return []
+
+def create_init_sol(facilities, communities, x_lb, x_ub, y_lb, y_ub, fac_fac_dist, r_guess : float=0) -> float:
+    # The idea of the algorithm is to decrease the radius until we find a feasible radius, this way we create a good intial solution.
+    feas_sol_found = False
+    max_iter = 1e3 * len(communities)
+    t = 0
+    if r_guess == 0:
+        r = 2.5 / math.sqrt(len(communities))
+    else:
+        r = r_guess
+    with tqdm(total=max_iter, desc="Shrinking r") as pbar:
+        while (not feas_sol_found) and (t < max_iter):
+            circles = []
+            for i in communities:
+                circles.append([i[0], i[1], r])
+            points = get_feas_points(circles, x_lb, x_ub, y_lb, y_ub)
+            # We now try to fit the facilities in the points while maintaining the fac_fac_distance
+            clique = find_n_clique(points, fac_fac_dist, facilities)
+            if clique == []:
+                r *= 0.95
+                pbar.update(1)
+            else:
+                feas_sol_found = True
+                fig, ax = plt.subplots()
+                box = patches.Rectangle((x_lb, y_lb), x_ub-x_lb, y_ub - y_lb, linewidth=3, edgecolor='black', facecolor='none')
+                ax.add_patch(box)
+                for c in circles:
+                    circle = patches.Circle((c[0], c[1]), c[2], linewidth=1, edgecolor='black', fill = True)
+                    ax.add_patch(circle)
+                for p in clique:
+                    ax.scatter(points[p][0], points[p][1], s=20, c='red', marker='o')
+                # Set limits and equal aspect ratio
+                ax.set_xlim(x_lb - abs(x_lb-x_ub)/2, x_ub + abs(x_lb-x_ub)/2)
+                ax.set_ylim(y_lb - abs(y_lb-y_ub)/2, y_ub + abs(y_lb-y_ub)/2)
+                ax.set_aspect('equal')
+            
+                # Show the plot
+                plt.grid(True)
+                plt.show()
+                return r, clique
+    return r, clique
 
 
 # ## Reading and plotting the solution
@@ -247,7 +348,7 @@ def update_LP(OFP, circles, x_lb, x_ub, y_lb, y_ub, mode, facilities, time_limit
 
 # ## Running
 
-def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None, presolve_limit : float = 1000, time_limit : float = None) -> None:
+def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None, presolve_limit : float = 1000, time_limit : float = None, precutting : int = 0, seperator : int = 0) -> None:
     '''
     This functions runs our program
     :param instance: The instance that we want to solve, as given by read_instance.
@@ -255,20 +356,44 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
     :param plot: This is a bool which turns on or off the plot of the solution.
     :param plot_file: If this is given the plot is saved to this file instead of shown.
     :param time_limit: The time limit for SCIP in seconds, when it is None there is no limit.
+    :param precutting: This is either 0 or 1, 0 is off and 1 is on.
+    :param seperator: This is either 0 or 1, 0 is off and 1 is on.
     '''
     facilities = instance['facilities']
     x_lb, x_ub = instance['x_bounds']
     y_lb, y_ub = instance['y_bounds']
     min_FF_dist = instance['ff_sq_bounds'][0]
     communities = instance['communities']
-    OFP = create_LP(x_lb, x_ub, y_lb, y_ub, communities, facilities, min_FF_dist, mode)
-    Init_sol = generate_heuristic_solution(OFP, presolve_limit)
-
+    Init_sol = create_init_sol(facilities, communities, x_lb, x_ub, y_lb, y_ub, min_FF_dist)
     circles = []
     for i in communities:
         circles.append([i[0], i[1], Init_sol])
+    if mode == 0:
+        if precutting == 0:
+            # This means that we only have one box that we have shrunken using the LP method
+            points, planes = IO.feas_region_box_LP(x_lb,x_ub,y_lb,y_ub,circles)
+        else: # Precutting == 1
+            # We divide into the different sets
+            points, planes = IO.feas_region_box_LP_cutting(x_lb,x_ub,y_lb,y_ub,circles)
+        poss_places = len(points)
+        
+
+    if mode == 1:
+        if precutting == 0:
+            # This means that we only have one box that we have shrunken using the GS method
+            pch, dp = IO.feas_region_box_GS(x_lb,x_ub,y_lb,y_ub,circles)
+        else: # Precutting == 1
+            # We divide into the different sets
+            intial_sets = IO.feas_region_box_GS_cutting(x_lb,x_ub,y_lb,y_ub,circles)
+            
+            
+
+
+
     
+    OFP = create_LP(x_lb, x_ub, y_lb, y_ub, communities, facilities, min_FF_dist, mode)
     OFP = update_LP(OFP, circles, x_lb, x_ub, y_lb, y_ub, mode, facilities)
+
     start = time.perf_counter()
     if time_limit is not None:
         OFP.setParam('limits/time', time_limit)
@@ -283,7 +408,7 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
     # A short summary at the end, so that the result is easy to find in the text file
     print("=" * 60)
     print("Summary")
-    print(f"Facilities: {facilities}, communities: {len(communities)}, mode: {mode}")
+    print(f"Facilities: {facilities}, communities: {len(communities)}, mode: {mode}, precutting: {precutting}, seperator: {seperator}")
     print(f"Status: {OFP.getStatus()}, total time: {total_time:.2f} s")
     solution = get_solution(OFP, instance)
     if solution is None:
@@ -308,6 +433,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Run an instance of the obnoxious facility location problem.")
     parser.add_argument("instance", help="The name of the instance, for example ofl_2_100i")
     parser.add_argument("--mode", type=int, default=1, choices=[0, 1], help="0 is LP, 1 is GS (default 1)")
+    parser.add_argument("--precutting", type=int, default=0, choices=[0,1], help="0 is off, 1 is on (default 0)")
+    parser.add_argument("--seperator", type=int, default=0, choices=[0,1], help="0 is off, 1 is on (default 0)")
     parser.add_argument("--plot-file", default=None, help="Saves the plot of the solution to this file")
     parser.add_argument("--time-limit", type=float, default=None, help="The time limit for SCIP in seconds")
     args = parser.parse_args()
@@ -319,7 +446,7 @@ def main() -> None:
     path = find_instance(args.instance)
     instance = read_instance(path.name)
     print(f"Instance: {path.name}", flush=True)
-    run(instance, args.mode, plot=args.plot_file is not None, plot_file=args.plot_file, presolve_limit=600,  time_limit=args.time_limit)
+    run(instance, args.mode, plot=args.plot_file is not None, plot_file=args.plot_file, presolve_limit=600, time_limit=args.time_limit, precutting=args.precutting, seperator=args.seperator)
     return None
 
 
