@@ -1,3 +1,22 @@
+import re
+import sys
+import math
+import time
+import argparse
+from pathlib import Path
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from pyscipopt import Model, quicksum
+import networkx as nx
+from tqdm import tqdm
+import math
+import Convex_hull as IO
+import Precutting as PC
+import Creating_LP as CLP
+import Administration_and_loading as AL
+
+
 def plot_solution(OFP, instance : dict, save_path : str = None) -> None:
     '''
     This makes a plot of the solution that SCIP has found for the obnoxious facility location problem.
@@ -6,7 +25,7 @@ def plot_solution(OFP, instance : dict, save_path : str = None) -> None:
     :param instance: The instance that has been solved, as given by read_instance.
     :param save_path: If this is given the plot is saved to this file instead of shown.
     '''
-    solution = get_solution(OFP, instance)
+    solution = AL.get_solution(OFP, instance)
     if solution is None:
         print("There is no solution to plot.")
         return None

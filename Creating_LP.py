@@ -1,3 +1,22 @@
+import re
+import sys
+import math
+import time
+import argparse
+from pathlib import Path
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from pyscipopt import Model, quicksum
+import networkx as nx
+from tqdm import tqdm
+import math
+import Convex_hull as IO
+import Plotting as PLOT
+import Precutting as PC
+
+
+
 # ## Creating the model
 
 def points_to_cons(points : list, p_inside : list) -> tuple[list, list]:
@@ -53,7 +72,7 @@ def create_objective(model, var_x, var_y, circles, best_sol : int=0):
     L = model.addVar(vtype='C', lb=0, ub=None, name='L')
     for j, c in enumerate(circles):
         for i, (x, y) in enumerate(zip(var_x, var_y)):
-            model.addCons(distance(c,(x,y)) >= L, f"MaxDistance_{i}_With{c[0],c[1]}")
+            model.addCons(((c[0] - x) ** 2 + (c[1] - y) ** 2) >= L, f"MaxDistance_{i}_With{c[0],c[1]}")
     model.setObjective(L,'maximize')
     if best_sol != 0:
         model.addCons(L >= best_sol, f"Using earlier found solution to cut off subproblems")
@@ -70,7 +89,7 @@ def create_LP(x_lb : float, x_ub : float, y_lb : float, y_ub : float, circles : 
         # The minimal distance between the facilities has to be added to OFP, and a facility does not need a distance to itself
         for j in range(i + 1, facilities):
             var2 = [ObnFacilities_x[j], ObnFacilities_y[j]]
-            OFP.addCons(distance(var, var2) >= min_fac_dist, f'MinDistF{i}_F{j}')
+            OFP.addCons(((var[0] - var2[0]) ** 2 + (var[1] - var2[1]) ** 2) >= min_fac_dist, f'MinDistF{i}_F{j}')
     create_objective(OFP, ObnFacilities_x,ObnFacilities_y, circles)
     return OFP
 
@@ -91,12 +110,12 @@ def add_conv_hull_cons_precut_LP(model, var_x, var_y, planes) -> None:
         model.addCons((planes[i][0] * var_x + planes[i][1] * var_y) <= planes[i][2], f'Convex hull constraint {i} for {[var_x,var_y]}')
     return model
 
-def update_LP(OFP, circles, x_lb, x_ub, y_lb, y_ub, mode, facilities, time_limit) -> None:
+def update_LP(OFP, circles, x_lb, x_ub, y_lb, y_ub, mode, facilities) -> None:
     '''
     This function adds the communities constraints to the model.
     '''
-    for var in facilities:
-        feas_region_constraint(x_lb, x_ub, y_lb, y_ub, circles, mode, OFP, var)
+    for var in range(facilities):
+        feas_region_constraint(x_lb, x_ub, y_lb, y_ub, circles, mode, OFP, [OFP.getVars()[2 * var], OFP.getVars()[2 * var + 1]])
     return OFP
 
 

@@ -71,10 +71,10 @@ for INSTANCE in "${INSTANCES[@]}"; do
         ARGS+=(--plot-file "${BASE}.png")
     fi
     if [ "$PRECUTTING" -eq 1 ]; then
-        ARGS+=(--precutting)
+        ARGS+=(--precutting 1)
     fi
     if [ "$SEPERATOR" -eq 1 ]; then
-        ARGS+=(--separator)
+        ARGS+=(--seperator 1)
     fi
     if [ -n "$TIME_LIMIT" ]; then
         ARGS+=(--time-limit "$TIME_LIMIT")

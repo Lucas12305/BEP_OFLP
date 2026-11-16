@@ -4,7 +4,24 @@
 # # Running the obnoxious facility location problem
 # This document contains the code to run an instance from the command line, see run.sh.
 # The definitions are the ones from Running.ipynb, together with the plot of the solution and a main that reads the command line.
-
+import re
+import sys
+import math
+import time
+import argparse
+from pathlib import Path
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from pyscipopt import Model, quicksum
+import networkx as nx
+from tqdm import tqdm
+import math
+import Convex_hull as IO
+import Plotting as PLOT
+import Precutting as PC
+import Creating_LP as CLP
+import Administration_and_loading as AL
 
 # ## Running
 
@@ -24,14 +41,18 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
     y_lb, y_ub = instance['y_bounds']
     min_FF_dist = instance['ff_sq_bounds'][0]
     communities = instance['communities']
-    Init_sol = creating_and_guessing(facilities, communities, x_lb, x_ub, y_lb, y_ub, min_FF_dist)
+    Init_sol = PC.creating_and_guessing(facilities, communities, x_lb, x_ub, y_lb, y_ub, min_FF_dist)
     circles = []
     for i in communities:
         circles.append([i[0], i[1], Init_sol])
+    
+    
+    
+    
     if precutting == 0:
             # This means that we only have one box that we have shrunken using the LP method
-            OFP = create_LP(x_lb, x_ub, y_lb, y_ub, communities, facilities, min_FF_dist, mode)
-            OFP = update_LP(OFP, circles, x_lb, x_ub, y_lb, y_ub, mode, facilities)
+            OFP = CLP.create_LP(x_lb, x_ub, y_lb, y_ub, communities, facilities, min_FF_dist, mode)
+            OFP = CLP.update_LP(OFP, circles, x_lb, x_ub, y_lb, y_ub, mode, facilities)
             
             start = time.perf_counter()
             if time_limit is not None:
@@ -49,7 +70,7 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
             print("Summary")
             print(f"Facilities: {facilities}, communities: {len(communities)}, mode: {mode}, precutting: {precutting}, seperator: {seperator}")
             print(f"Status: {OFP.getStatus()}, total time: {total_time:.2f} s")
-            solution = get_solution(OFP, instance)
+            solution = AL.get_solution(OFP, instance)
             if solution is None:
                 print("No solution was found.")
             else:
@@ -61,17 +82,25 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
             print("=" * 60, flush=True)
         
             if plot == True:
-                plot_solution(OFP, instance, plot_file)
+                PLOT.plot_solution(OFP, instance, plot_file)
             return None
+
+
+
+
+
 
 
 
     else: # Precutting == 1
         # We divide into the different sets
+        
+        
+        
         if mode == 0:
             points, planes = IO.feas_region_box_LP_cutting(x_lb,x_ub,y_lb,y_ub,circles)
             poss_places = len(points)
-            subproblems_combinations = IO.combinations(facilities, poss_places)
+            subproblems_combinations = PC.combinations(facilities, poss_places)
             best_found_sol = Init_sol
             index_bfs = [-1]
             # We now want to create all of the subproblem
@@ -86,15 +115,15 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
                     # The minimal distance between the facilities has to be added to OFP, and a facility does not need a distance to itself
                     for j in range(i + 1, facilities):
                         var2 = [ObnFacilities_x[j], ObnFacilities_y[j]]
-                        OFP[i].addCons(distance(var, var2) >= min_FF_dist, f'MinDistF{i}_F{j}')
+                        OFP[i].addCons(CLP.distance(var, var2) >= min_FF_dist, f'MinDistF{i}_F{j}')
                     
                     # Now comes the extra step, here we specifically make it so that the facilities are in a certain spot
                     for i in range(poss_places):
                         if comb[i] != 0:
                             comb[i] -= 1
-                            add_conv_hull_cons_precut_LP(OFP[i], ObnFacilities_x[i], ObnFacilities_y[i], planes[i])
+                            CLP.add_conv_hull_cons_precut_LP(OFP[i], ObnFacilities_x[i], ObnFacilities_y[i], planes[i])
                             break
-                create_objective(OFP[i], ObnFacilities_x,ObnFacilities_y, circles, best_found_sol)
+                CLP.create_objective(OFP[i], ObnFacilities_x,ObnFacilities_y, circles, best_found_sol)
                 OFP[i].addCons()
                 if time_limit is not None:
                     OFP[i].setParam('limits/time', time_limit)
@@ -117,7 +146,7 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
                 print("Summary")
                 print(f"Facilities: {facilities}, communities: {len(communities)}, mode: {mode}, precutting: {precutting}, seperator: {seperator}")
                 print(f"Status: {OFP[j].getStatus()}, total time: {total_time:.2f} s")
-                solution = get_solution(OFP[j], instance)
+                solution = AL.get_solution(OFP[j], instance)
                 if solution is None:
                     print("No solution was found.")
                 else:
@@ -129,14 +158,22 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
                 print("=" * 60, flush=True)
             
                 if plot == True:
-                    plot_solution(OFP[j], instance, plot_file)
+                    PLOT.plot_solution(OFP[j], instance, plot_file)
                 return None         
 
+        
+        
+        
+        
+        
+        
+        
+        
         else: # mode == 1
             # We divide into the different sets
             sorted_points, deleted_points = IO.feas_region_box_GS_cutting(x_lb,x_ub,y_lb,y_ub,circles)
             poss_places = len(sorted_points)
-            subproblems_combinations = IO.combinations(facilities, poss_places)
+            subproblems_combinations = PC.combinations(facilities, poss_places)
             best_found_sol = Init_sol
             index_bfs = [-1]
             # We now want to create all of the subproblem
@@ -151,15 +188,15 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
                     # The minimal distance between the facilities has to be added to OFP, and a facility does not need a distance to itself
                     for j in range(i + 1, facilities):
                         var2 = [ObnFacilities_x[j], ObnFacilities_y[j]]
-                        OFP[i].addCons(distance(var, var2) >= min_FF_dist, f'MinDistF{i}_F{j}')
+                        OFP[i].addCons(CLP.distance(var, var2) >= min_FF_dist, f'MinDistF{i}_F{j}')
                     
                     # Now comes the extra step, here we specifically make it so that the facilities are in a certain spot
                     for i in range(poss_places):
                         if comb[i] != 0:
                             comb[i] -= 1
-                            add_conv_hull_cons_precut_GS(OFP[i], ObnFacilities_x[i], ObnFacilities_y[i], poss_places[i])
+                            CLP.add_conv_hull_cons_precut_GS(OFP[i], ObnFacilities_x[i], ObnFacilities_y[i], poss_places[i])
                             break
-                create_objective(OFP[i], ObnFacilities_x,ObnFacilities_y, circles, best_found_sol)
+                CLP.create_objective(OFP[i], ObnFacilities_x,ObnFacilities_y, circles, best_found_sol)
                 OFP[i].addCons()
                 if time_limit is not None:
                     OFP[i].setParam('limits/time', time_limit)
@@ -182,7 +219,7 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
                 print("Summary")
                 print(f"Facilities: {facilities}, communities: {len(communities)}, mode: {mode}, precutting: {precutting}, seperator: {seperator}")
                 print(f"Status: {OFP[j].getStatus()}, total time: {total_time:.2f} s")
-                solution = get_solution(OFP[j], instance)
+                solution = AL.get_solution(OFP[j], instance)
                 if solution is None:
                     print("No solution was found.")
                 else:
@@ -194,48 +231,11 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
                 print("=" * 60, flush=True)
             
                 if plot == True:
-                    plot_solution(OFP[j], instance, plot_file)
+                    PLOT.plot_solution(OFP[j], instance, plot_file)
                 return None     
             
 
-            
 
-
-
-    
-    OFP = create_LP(x_lb, x_ub, y_lb, y_ub, communities, facilities, min_FF_dist, mode)
-    OFP = update_LP(OFP, circles, x_lb, x_ub, y_lb, y_ub, mode, facilities)
-
-    start = time.perf_counter()
-    if time_limit is not None:
-        OFP.setParam('limits/time', time_limit)
-    else:
-        OFP.setParam('limits/time', (24 * 3600))
-    OFP.optimize()
-    OFP.printStatistics()
-    OFP.printBestSol()
-    total_time = time.perf_counter() - start
-
-    
-    # A short summary at the end, so that the result is easy to find in the text file
-    print("=" * 60)
-    print("Summary")
-    print(f"Facilities: {facilities}, communities: {len(communities)}, mode: {mode}, precutting: {precutting}, seperator: {seperator}")
-    print(f"Status: {OFP.getStatus()}, total time: {total_time:.2f} s")
-    solution = get_solution(OFP, instance)
-    if solution is None:
-        print("No solution was found.")
-    else:
-        facility_points, L = solution
-        print(f"Objective L (squared distance): {L}")
-        print(f"Radius sqrt(L): {np.sqrt(L)}")
-        for i, f in enumerate(facility_points):
-            print(f"Facility {i}: x = {f[0]}, y = {f[1]}")
-    print("=" * 60, flush=True)
-
-    if plot == True:
-        plot_solution(OFP, instance, plot_file)
-    return None
 
 
 def main() -> None:
@@ -245,8 +245,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Run an instance of the obnoxious facility location problem.")
     parser.add_argument("instance", help="The name of the instance, for example ofl_2_100i")
     parser.add_argument("--mode", type=int, default=1, choices=[0, 1], help="0 is LP, 1 is GS (default 1)")
-    parser.add_argument("--precutting", type=int, default=0, choices=[0,1], help="0 is off, 1 is on (default 0)")
-    parser.add_argument("--seperator", type=int, default=0, choices=[0,1], help="0 is off, 1 is on (default 0)")
+    parser.add_argument("--precutting", type=int, default=0, choices=[0, 1], help="0 is off, 1 is on (default 0)")
+    parser.add_argument("--seperator", type=int, default=0, choices=[0, 1], help="0 is off, 1 is on (default 0)")
     parser.add_argument("--plot-file", default=None, help="Saves the plot of the solution to this file")
     parser.add_argument("--time-limit", type=float, default=None, help="The time limit for SCIP in seconds")
     args = parser.parse_args()
@@ -255,8 +255,8 @@ def main() -> None:
     if args.plot_file is not None:
         plt.switch_backend("Agg")
 
-    path = find_instance(args.instance)
-    instance = read_instance(path.name)
+    path = AL.find_instance(args.instance)
+    instance = AL.read_instance(path.name)
     print(f"Instance: {path.name}", flush=True)
     run(instance, args.mode, plot=args.plot_file is not None, plot_file=args.plot_file, presolve_limit=600, time_limit=args.time_limit, precutting=args.precutting, seperator=args.seperator)
     return None
@@ -264,3 +264,7 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+
+

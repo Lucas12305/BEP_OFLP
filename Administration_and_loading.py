@@ -11,7 +11,6 @@ from pyscipopt import Model, quicksum
 import networkx as nx
 from tqdm import tqdm
 import math
-
 import Convex_hull as IO
 
 

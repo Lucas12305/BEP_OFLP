@@ -1,3 +1,21 @@
+import re
+import sys
+import math
+import time
+import argparse
+from pathlib import Path
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from pyscipopt import Model, quicksum
+import networkx as nx
+from tqdm import tqdm
+import math
+import Convex_hull as IO
+import Plotting as PLOT
+import Precutting as PC
+
+
 def get_feas_points(circles, x_lb, x_ub, y_lb, y_ub) -> float:
     # We create 1000 possible facility locations, we then check for each which are feasible to get points to try to fit the number of facilities.
     poss_fac = []
@@ -153,7 +171,7 @@ def preliminary_cuts(circles_belong_points : list, circles : list, x_lb : float,
             p_middle = (p2 + p1) / 2
             p_middle_inside = False
             for c in circles:
-                if interior_circle(p_middle, c):
+                if IO.interior_circle(p_middle, c):
                     p_middle_inside = True
                     break
             if not p_middle_inside:
@@ -168,18 +186,18 @@ def preliminary_cuts(circles_belong_points : list, circles : list, x_lb : float,
         else:
             a_p = []
             for p in set_of_points:
-                a_p.append([p[0], p[1], angle_points(circles[sp], p1)[0]])
+                a_p.append([p[0], p[1], IO.angle_points(circles[sp], p1)[0]])
             
             
             # How do we sort, we want to sort such that the angle increases.
             a_p.sort(key=lambda point: point[2])
             for p in range(n):
                 p1, p2 = a_p[p], a_p[(p + 1) % n]
-                p_middle = angle_to_points(circles[sp], ((p2[2] - p1[2]) / 2 ) % (2 * math.pi))
+                p_middle = IO.angle_to_points(circles[sp], ((p2[2] - p1[2]) / 2 ) % (2 * math.pi))
                 # We now check if p_middle is inside some circle
                 p_middle_inside = False
                 for c in circles:
-                    if interior_circle(p_middle,c):
+                    if IO.interior_circle(p_middle,c):
                         p_middle_inside = True
                         break
                 if not p_middle_inside:
@@ -199,11 +217,11 @@ def preliminary_cuts(circles_belong_points : list, circles : list, x_lb : float,
         p1, p2 = cons_con
 
         # We first check if either are at a bound, then for this ci it stops.
-        if at_bound(p1, x_lb, x_ub, y_lb, y_ub):
+        if IO.at_bound(p1, x_lb, x_ub, y_lb, y_ub):
             stop_iter_clockwise = True
         else:
             stop_iter_clockwise = False
-        if at_bound(p2, x_lb, x_ub, y_lb, y_ub):
+        if IO.at_bound(p2, x_lb, x_ub, y_lb, y_ub):
             stop_iter_anti_clock = True
         else:
             stop_iter_anti_clock = False
@@ -228,9 +246,9 @@ def preliminary_cuts(circles_belong_points : list, circles : list, x_lb : float,
                 it += 1
 
             # We keep this going until both are at a boundary or if they come to the same point, i.e. connect to make a cycle.
-            if at_bound(set_i[0], x_lb, x_ub, y_lb, y_ub):
+            if IO.at_bound(set_i[0], x_lb, x_ub, y_lb, y_ub):
                 stop_iter_clockwise = True
-            if at_bound(set_i[-1], x_lb, x_ub, y_lb, y_ub):
+            if IO.at_bound(set_i[-1], x_lb, x_ub, y_lb, y_ub):
                 stop_iter_anti_clock = True
             if set_i[0] == set_i[-1]:
                 stop_iter_anti_clock = True

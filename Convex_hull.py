@@ -12,11 +12,23 @@
 # In[ ]:
 
 
+import re
+import sys
+import math
+import time
+import argparse
+from pathlib import Path
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import numpy as np
-import math
 from pyscipopt import Model, quicksum
+import networkx as nx
+from tqdm import tqdm
+import math
+import Convex_hull as IO
+import Plotting as PLOT
+import Precutting as PC
+
 
 
 # ## General definitions
@@ -537,7 +549,7 @@ def feas_region_box_LP(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
     planes = create_conv_region(points, solutions)
 
     if plot == True:
-        plot_box_LP(x_lb,x_ub,y_lb,y_ub, circles, points, planes, trc, rc)
+        PLOT.plot_box_LP(x_lb,x_ub,y_lb,y_ub, circles, points, planes, trc, rc)
     
     return points, planes
 
@@ -628,7 +640,7 @@ def feas_region_box_LP_cutting(x_lb : float, x_ub : float, y_lb : float, y_ub : 
 
 
     # We now split the points into convex hulls, i.e. the preliminary cut
-    subset_points = preliminary_cuts(points_belong_circle, circles, x_lb, x_ub, y_lb, y_ub)
+    subset_points = PC.preliminary_cuts(points_belong_circle, circles, x_lb, x_ub, y_lb, y_ub)
     
     #We now create the new convex feasible region
     planes = [[]] * len(subset_points)
@@ -638,7 +650,7 @@ def feas_region_box_LP_cutting(x_lb : float, x_ub : float, y_lb : float, y_ub : 
 
     if plot == True:
         for p in range(len(planes)):
-            plot_box_LP(x_lb,x_ub,y_lb,y_ub, circles, subset_points[p], planes[p], trc, rc)
+            PLOT.plot_box_LP(x_lb,x_ub,y_lb,y_ub, circles, subset_points[p], planes[p], trc, rc)
     
     return points, planes
 
@@ -742,7 +754,7 @@ def feas_region_box_GS(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
     pch, dp = create_conv_region_GS(points)
     
     if plot == True: 
-        plot_box_GS(x_lb,x_ub,y_lb,y_ub, circles, points, pch, trc, rc)
+        PLOT.plot_box_GS(x_lb,x_ub,y_lb,y_ub, circles, points, pch, trc, rc)
     
     return pch, dp
 
@@ -841,7 +853,7 @@ def feas_region_box_GS_cutting(x_lb : float, x_ub : float, y_lb : float, y_ub : 
                             points.append(point)
 
    # # We now split the points into convex hulls, i.e. the preliminary cut
-    subset_points = preliminary_cuts(points_belong_circle, circles, x_lb, x_ub, y_lb, y_ub)
+    subset_points = PC.preliminary_cuts(points_belong_circle, circles, x_lb, x_ub, y_lb, y_ub)
        
     #We now create the new convex feasible region
     pch = [[]] * len(subset_points)
@@ -850,7 +862,7 @@ def feas_region_box_GS_cutting(x_lb : float, x_ub : float, y_lb : float, y_ub : 
         pch[p], dp[p] = create_conv_region_GS(subset_points[p])  
                         
     if plot == True: 
-        plot_box_GS(x_lb,x_ub,y_lb,y_ub, circles, points, pch, trc, rc)
+        PLOT.plot_box_GS(x_lb,x_ub,y_lb,y_ub, circles, points, pch, trc, rc)
     
     return pch, dp
 
@@ -1072,8 +1084,8 @@ def cutting_convex_hull(x_lb : float, x_ub : float, y_lb : float, y_ub : float, 
         b2_y_lb = cut_val
     
     if plot == True:
-        plot_box_GS(x_lb,b1_x_ub,y_lb,b1_y_ub, circles, b1_not_used, b1, [], [])
-        plot_box_GS(b2_x_lb,x_ub,b2_y_lb,y_ub, circles, b2_not_used, b2, [], [])
+        PLOT.plot_box_GS(x_lb,b1_x_ub,y_lb,b1_y_ub, circles, b1_not_used, b1, [], [])
+        PLOT.plot_box_GS(b2_x_lb,x_ub,b2_y_lb,y_ub, circles, b2_not_used, b2, [], [])
     
     if in_out:
         print(f"Box 1 has the following cycle {b1}, and has {b1_not_used}")
