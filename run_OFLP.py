@@ -44,7 +44,7 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
     Init_sol = PC.create_init_sol(facilities, communities, x_lb, x_ub, y_lb, y_ub, min_FF_dist)
     circles = []
     for i in communities:
-        circles.append([i[0], i[1], Init_sol])
+        circles.append([i[0], i[1], Init_sol[0]])
     
     
     
@@ -98,7 +98,7 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
             points, planes = IO.feas_region_box_LP_cutting(x_lb,x_ub,y_lb,y_ub,circles)
             poss_places = len(points)
             subproblems_combinations = PC.combinations(facilities, poss_places)
-            best_found_sol = Init_sol
+            best_found_sol = Init_sol[0]
             index_bfs = [-1]
             # We now want to create all of the subproblem
             print(f"We are going to be looking at {len(subproblems_combinations)} combinations. After the best possible solution will be pasted.")
@@ -123,7 +123,6 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
                             CLP.add_conv_hull_cons_precut_LP(OFP[i], ObnFacilities_x[i], ObnFacilities_y[i], planes[i])
                             break
                 CLP.create_objective(OFP[i], ObnFacilities_x,ObnFacilities_y, circles, best_found_sol)
-                OFP[i].addCons()
                 if time_limit is not None:
                     OFP[i].setParam('limits/time', time_limit)
                 else:
@@ -174,11 +173,13 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
             sorted_points, deleted_points = IO.feas_region_box_GS_cutting(x_lb,x_ub,y_lb,y_ub,circles)
             poss_places = len(sorted_points)
             subproblems_combinations = PC.combinations(facilities, poss_places)
-            best_found_sol = Init_sol
+            best_found_sol = Init_sol[0]
             index_bfs = [-1]
             # We now want to create all of the subproblem
+            print(f"We are going to be looking at {len(subproblems_combinations)} combinations. After the best possible solution will be pasted.")
             OFP = {}
-            for i in range(len(subproblems_combinations)):
+            pbar = tqdm(range(len(subproblems_combinations)), desc="Subproblems")
+            for i in pbar:
                 comb = subproblems_combinations[i]    
                 OFP[i] = Model(f'OFP_{i} problem with {facilities} facilities (with minimal distance {min_FF_dist}) and {len(circles)} communities and combinations {comb}.')
                 ObnFacilities_x = [OFP[i].addVar(vtype='C', lb=x_lb, ub=x_ub, name=f"x_{j}") for j in range(facilities)]
@@ -210,6 +211,7 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
                         index_bfs = [i]
                     if L == best_found_sol:
                         index_bfs = index_bfs + [i]
+                pbar.set_postfix(best_radius=f"{np.sqrt(best_found_sol):.4f}")
             
             for j in index_bfs:
                 OFP[j].printStatistics()
