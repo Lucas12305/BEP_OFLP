@@ -58,7 +58,7 @@ def interior_circle(point : list, circle : list) -> bool:
     :param point: The point that we want to check.
     :param circle: The circle that we want to check.
     '''
-    if (circle[0] - point[0]) ** 2 + (circle[1] - point[1]) ** 2 < circle[2] ** 2 - 1e-4:
+    if (circle[0] - point[0]) ** 2 + (circle[1] - point[1]) ** 2 < circle[2] ** 2 - 1e-9:
         return True
     else:
         return False
@@ -336,7 +336,11 @@ def create_conv_region_GS(points : list) -> list:
     
     # We first find the point with the lowest y-value and set it as the start of the sorted points.
     # When two points have the same y-value the one with the lowest x-value gets taken
-    points_GS = points.copy()
+    points_GS = []
+    for p in points:
+        q = [p[0], p[1]]
+        if q not in points_GS:
+            points_GS.append(q)
     if len(points_GS) == 0:
         return [], []
     if len(points_GS) <= 2:
@@ -569,7 +573,7 @@ def feas_region_box_LP(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
             c1, c2 = circles_used[i], circles_used[j]
             if c1 == c2:
                 continue
-            elif ((c1[0] - c2[0]) ** 2) + ((c1[1] - c2[1]) ** 2) >= c1[2] ** 2 + c2[2] ** 2:
+            elif ((c1[0] - c2[0]) ** 2) + ((c1[1] - c2[1]) ** 2) >= (c1[2] + c2[2]) ** 2:
                 continue
             else:
                 intersections = circles_circles(circles_used,i,j)
@@ -702,7 +706,7 @@ def feas_region_box_LP_cutting(x_lb : float, x_ub : float, y_lb : float, y_ub : 
             c1, c2 = circles_used[i], circles_used[j]
             if c1 == c2:
                 continue
-            elif ((c1[0] - c2[0]) ** 2) + ((c1[1] - c2[1]) ** 2) >= c1[2] ** 2 + c2[2] ** 2:
+            elif ((c1[0] - c2[0]) ** 2) + ((c1[1] - c2[1]) ** 2) >= (c1[2] + c2[2]) ** 2:
                 continue
             else:
                 intersections = circles_circles(circles_used,i,j)
@@ -843,7 +847,7 @@ def feas_region_box_GS(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
             c1, c2 = circles_used[i], circles_used[j]
             if c1 == c2:
                 continue
-            elif ((c1[0] - c2[0]) ** 2) + ((c1[1] - c2[1]) ** 2) >= c1[2] ** 2 + c2[2] ** 2:
+            elif ((c1[0] - c2[0]) ** 2) + ((c1[1] - c2[1]) ** 2) >= (c1[2] + c2[2]) ** 2:
                 continue
             else:
                 intersections = circles_circles(circles_used,i,j)
@@ -976,7 +980,7 @@ def feas_region_box_GS_cutting(x_lb : float, x_ub : float, y_lb : float, y_ub : 
             c1, c2 = circles_used[i], circles_used[j]
             if c1 == c2:
                 continue
-            elif ((c1[0] - c2[0]) ** 2) + ((c1[1] - c2[1]) ** 2) >= c1[2] ** 2 + c2[2] ** 2:
+            elif ((c1[0] - c2[0]) ** 2) + ((c1[1] - c2[1]) ** 2) >= (c1[2] + c2[2]) ** 2:
                 continue
             else:
                 intersections = circles_circles(circles_used,i,j)

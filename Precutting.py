@@ -164,13 +164,14 @@ def preliminary_cuts(circles_belong_points : list, circles : list, x_lb : float,
     :param circles: These are the 4 box bounds and then all of the circles.
     '''
     m = len(circles_belong_points)
-    for i in range(4, m):
-            print(f"We have a circle {circles[i - 4]} and it has the following points {circles_belong_points[i]}")
+    #for i in range(4, m):
+        #print(f"We have a circle {circles[i - 4]} and it has the following points {circles_belong_points[i]}")
     connections = []
+    for k in range(m):
+        connections.append([])
 
     for sp in range(4,m):
         set_of_points = circles_belong_points[sp]
-        connections.append([])
         n = len(set_of_points)
         if n <= 1:
             continue
@@ -184,7 +185,7 @@ def preliminary_cuts(circles_belong_points : list, circles : list, x_lb : float,
             a_p.sort(key=lambda point: point[2])
             for p in range(n):
                 p1, p2 = a_p[p], a_p[(p + 1) % n]
-                p_middle = IO.angle_to_points(circles[sp - 4], ((p2[2] - p1[2]) / 2 ) % (2 * math.pi))
+                p_middle = IO.angle_to_points(circles[sp - 4], (p1[2] + ((p2[2] - p1[2]) % (2 * math.pi)) / 2) % (2 * math.pi))
                 # We now check if p_middle is inside some circle
                 p_middle_inside = False
                 if (x_lb <= p_middle[0] <= x_ub) and (y_lb <= p_middle[1] <= y_ub):
@@ -201,7 +202,10 @@ def preliminary_cuts(circles_belong_points : list, circles : list, x_lb : float,
         if n <= 1:
             continue
         else:
-            set_of_points.sort(key=lambda  point : (point[0], point[1]))
+            if (sp == 1) or (sp == 2):
+                set_of_points.sort(key=lambda  point : (-point[0], -point[1]))
+            else:
+                set_of_points.sort(key=lambda  point : (point[0], point[1]))
         for i in range(n - 1):
             p1, p2 = set_of_points[i], set_of_points[i + 1]
             p_middle = [(p2[0] + p1[0]) / 2, (p2[1] + p1[1]) / 2]
