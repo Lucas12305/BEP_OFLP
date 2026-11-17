@@ -70,7 +70,10 @@ def find_n_clique(points, fac_fac_dist, n) -> list:
             clique_explored = False
             while not clique_explored:
                 if len(clique) == n:
-                    return clique
+                    clique_points = []
+                    for i in clique:
+                        clique_points.append(points[i])
+                    return clique_points
                 if len(clique) + len(level_neighbours[-1]) < n:
                     clique.pop()
                     level_neighbours.pop()
@@ -161,16 +164,19 @@ def preliminary_cuts(circles_belong_points : list, circles : list, x_lb : float,
     :param circles: These are the 4 box bounds and then all of the circles.
     '''
     m = len(circles_belong_points)
-    connections = [[]] * m
-    for sp in range(1):
+    for i in range(4, m):
+            print(f"We have a circle {circles[i - 4]} and it has the following points {circles_belong_points[i]}")
+    connections = []
+    for sp in range(4):
+        connections.append([])
         set_of_points = circles_belong_points[sp]
         n = len(set_of_points)
         if n <= 1:
             continue
         else:
-            set_of_points.sort(key=lambda  point : point[1])
-        for i in range(n):
-            p1, p2 = set_of_points[i], set_of_points[(i + 1) % n]
+            set_of_points.sort(key=lambda  point : (point[0], point[1]))
+        for i in range(n - 1):
+            p1, p2 = set_of_points[i], set_of_points[i + 1]
             p_middle = [(p2[0] + p1[0]) / 2, (p2[1] + p1[1]) / 2]
             p_middle_inside = False
             for c in circles:
@@ -178,11 +184,12 @@ def preliminary_cuts(circles_belong_points : list, circles : list, x_lb : float,
                     p_middle_inside = True
                     break
             if not p_middle_inside:
-                connections[i].append([p1,p2])
+                connections[sp].append([p1,p2])
 
 
     for sp in range(4,m):
         set_of_points = circles_belong_points[sp]
+        connections.append([])
         n = len(set_of_points)
         if n <= 1:
             continue
@@ -199,12 +206,13 @@ def preliminary_cuts(circles_belong_points : list, circles : list, x_lb : float,
                 p_middle = IO.angle_to_points(circles[sp - 4], ((p2[2] - p1[2]) / 2 ) % (2 * math.pi))
                 # We now check if p_middle is inside some circle
                 p_middle_inside = False
-                for c in circles:
-                    if IO.interior_circle(p_middle,c):
-                        p_middle_inside = True
-                        break
-                if not p_middle_inside:
-                    connections[sp].append([p1,p2])
+                if (x_lb <= p_middle[0] <= x_ub) and (y_lb <= p_middle[1] <= y_ub):
+                    for c in circles:
+                        if IO.interior_circle(p_middle,c):
+                            p_middle_inside = True
+                            break
+                    if not p_middle_inside:
+                        connections[sp].append([p1,p2])
 
     # We now have a list of all of the sorted connections inside the circles. 
     # This means that we can pick a point and then go both ways, one way is that we go up in index, and the other we go down.
@@ -214,7 +222,7 @@ def preliminary_cuts(circles_belong_points : list, circles : list, x_lb : float,
     for con in connections:
         for c in con:
             connections_left.append(c)
-    
+
     while len(connections_left) > 0:
         # We take a connection out of the list, so every iteration the list gets shorter
         p1, p2 = connections_left.pop(0)
@@ -242,5 +250,32 @@ def preliminary_cuts(circles_belong_points : list, circles : list, x_lb : float,
                 stop_first = True
                 stop_last = True
         subsets_of_hulls.append(set_i)
+    print(f"We have derived {len(subsets_of_hulls)} subsets of hulls.")
+    # A plot of all of the subsets of hulls, with the number of subsets in the title
+    fig, ax = plt.subplots()
+    box = patches.Rectangle((x_lb, y_lb), x_ub - x_lb, y_ub - y_lb, linewidth=3, edgecolor='black', facecolor='none')
+    ax.add_patch(box)
+    for c in circles:
+        circle = patches.Circle((c[0], c[1]), c[2], linewidth=1, edgecolor='grey', facecolor='lightgrey', alpha=0.4)
+        ax.add_patch(circle)
 
+    colors = plt.cm.tab20.colors
+    for k in range(len(subsets_of_hulls)):
+        xs = []
+        ys = []
+        for p in subsets_of_hulls[k]:
+            xs.append(p[0])
+            ys.append(p[1])
+        color = colors[k % len(colors)]
+        ax.plot(xs, ys, '-o', color=color, linewidth=2, markersize=4)
+        # The number of the subset is written at the middle point of the subset
+        mid = subsets_of_hulls[k][len(subsets_of_hulls[k]) // 2]
+        ax.text(mid[0], mid[1], str(k), color=color, fontsize=12, fontweight='bold')
+
+    ax.set_xlim(x_lb - abs(x_lb - x_ub) / 10, x_ub + abs(x_lb - x_ub) / 10)
+    ax.set_ylim(y_lb - abs(y_lb - y_ub) / 10, y_ub + abs(y_lb - y_ub) / 10)
+    ax.set_aspect('equal')
+    ax.set_title(f"{len(subsets_of_hulls)} subsets of hulls")
+    plt.grid(True)
+    plt.show()
     return subsets_of_hulls

@@ -180,6 +180,8 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
             OFP = {}
             pbar = tqdm(range(len(subproblems_combinations)), desc="Subproblems")
             for i in pbar:
+                #times = {"build": 0.0, "objective": 0.0, "solve": 0.0, "free": 0.0}
+                #t0 = time.perf_counter()
                 comb = subproblems_combinations[i]    
                 OFP[i] = Model(f'OFP_{i} problem with {facilities} facilities (with minimal distance {min_FF_dist}) and {len(circles)} communities and combinations {comb}.')
                 ObnFacilities_x = [OFP[i].addVar(vtype='C', lb=x_lb, ub=x_ub, name=f"x_{j}") for j in range(facilities)]
@@ -197,13 +199,17 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
                             comb[m] -= 1
                             CLP.add_conv_hull_cons_precut_GS(OFP[i], var[0], var[1], sorted_points[m])
                             break
+                #t1 = time.perf_counter()
                 CLP.create_objective(OFP[i], ObnFacilities_x,ObnFacilities_y, circles, best_found_sol)
                 if time_limit is not None:
                     OFP[i].setParam('limits/time', time_limit)
                 else:
                     OFP[i].setParam('limits/time', (3600))
+                
+                #t2 = time.perf_counter()
                 OFP[i].hideOutput()
                 OFP[i].optimize()
+                #t3 = time.perf_counter()
                 if OFP[i].getNSols() > 0:
                     L = OFP[i].getObjVal()
                     if L > best_found_sol:
@@ -211,7 +217,15 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
                         index_bfs = [i]
                     if L == best_found_sol:
                         index_bfs = index_bfs + [i]
+                #t4 = time.perf_counter()
+                
+                #times["build"] = t1 - t0
+                #times["objective"] = t2 - t1
+                #times["solve"] = t3 - t2
+                #times['overig'] = t4 - t3
+                #print(f"For iteration {i}, we found a create time for the LP of {times['build']}, objective build of {times['objective']} and it was solved in {times['solve']}, also we have {times['overig']}.")
                 pbar.set_postfix(best_radius=f"{np.sqrt(best_found_sol):.4f}")
+
             
             for j in index_bfs:
                 OFP[j].printStatistics()

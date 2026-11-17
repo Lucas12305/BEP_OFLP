@@ -507,22 +507,61 @@ def feas_region_box_LP(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
     remove_indices.sort(reverse=True)
     for index in remove_indices:
         if trc == True:
-            rc.append(circles_used[index])
+                rc.append(circles_used[index])
         circles_used.remove(circles_used[index])
     
     # We now look at all of the intersections between the circles and the square
     m = len(circles_used) + 4
-    points = [(x_lb, y_lb), (x_lb, y_ub), (x_ub, y_lb), (x_ub, y_ub)]
-    points_belong_circle = [[]]*m
+    points = []
+    points_belong_circle = [[], [], [], []]
+    p1f, p2f, p3f, p4f = True, True, True, True
+    for c in circles_used:
+        if not (p1f or p2f or p3f or p4f):
+            break
+        if interior_circle([x_lb,y_lb], c):
+            p1f = False
+        if interior_circle([x_ub,y_lb], c):
+            p2f = False
+        if interior_circle([x_ub,y_ub], c):
+            p3f = False
+        if interior_circle([x_lb,y_ub], c):
+            p4f = False
+    if p1f:
+        points.append([x_lb, y_lb])
+        points_belong_circle[0].append([x_lb, y_lb])
+        points_belong_circle[2].append([x_lb, y_lb])
+    if p2f:
+        points.append([x_ub, y_lb])
+        points_belong_circle[1].append([x_ub, y_lb])
+        points_belong_circle[2].append([x_ub, y_lb])
+    if p3f:
+        points.append([x_ub, y_ub])
+        points_belong_circle[1].append([x_ub, y_ub])
+        points_belong_circle[3].append([x_ub, y_ub])
+    if p4f:
+        points.append([x_lb, y_ub])
+        points_belong_circle[3].append([x_lb, y_ub])
+        points_belong_circle[0].append([x_lb, y_ub])
+
+    
     for i in range(len(circles_used)):
+        points_belong_circle.append([])
         point, points_belong_circle = box_circles(x_lb, x_ub, y_lb, y_ub, circles_used, i, points_belong_circle)
         #print(f"We are looking at the circle: {circle} and it produces points :{point}")
         for p in point:
             #print(f"Point {p} is not in the list of points: {points}? {p not in points}")
-            if p not in points_belong_circle[i+4]:
-                points_belong_circle[i+4].append(p)
-            if p not in points:
-                points.append(p)
+            if type(p) != list:
+                n_point = [p]
+                p = n_point
+            interior = False
+            for c in circles_used:
+                if interior_circle(p,c):
+                    interior = True
+            if not interior:
+                if p not in points_belong_circle[i+4]:
+                    points_belong_circle[i+4].append(p)
+                if p not in points:
+                    points.append(p)
 
     # We now look at all of the intersections between the circles
     for i in range(n):
@@ -533,18 +572,21 @@ def feas_region_box_LP(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
             elif ((c1[0] - c2[0]) ** 2) + ((c1[1] - c2[1]) ** 2) >= c1[2] ** 2 + c2[2] ** 2:
                 continue
             else:
-                intersections = circles_circles(circles,i,j)
+                intersections = circles_circles(circles_used,i,j)
             for point in intersections:
-                if point not in points:
-                    interior = False
-                    if (x_lb <= point[0] <= x_ub) and (y_lb <= point[1] <= y_ub):
-                        for c in circles_used:
-                            if interior_circle(point, c) == True:
-                                interior = True
-                        if (not interior):
-                            points_belong_circle[i+4].append(point)
-                            points_belong_circle[j+4].append(point)
-                            points.append(point)
+                if type(point) != list:
+                    n_point = [point]
+                    point = n_point
+                interior = False
+                if (x_lb <= point[0] <= x_ub) and (y_lb <= point[1] <= y_ub):
+                    for c in circles_used:
+                        if interior_circle(point, c) == True:
+                            interior = True
+                    if (not interior):
+                        points_belong_circle[i+4].append(point)
+                        points_belong_circle[j+4].append(point)
+                        if point not in points:
+                               points.append(point)
     
     planes = create_conv_region(points, solutions)
 
@@ -599,22 +641,31 @@ def feas_region_box_LP_cutting(x_lb : float, x_ub : float, y_lb : float, y_ub : 
     remove_indices.sort(reverse=True)
     for index in remove_indices:
         if trc == True:
-            rc.append(circles_used[index])
+                rc.append(circles_used[index])
         circles_used.remove(circles_used[index])
     
     # We now look at all of the intersections between the circles and the square
     m = len(circles_used) + 4
-    points = [(x_lb, y_lb), (x_lb, y_ub), (x_ub, y_lb), (x_ub, y_ub)]
-    points_belong_circle = [[]]*m
+    points = [[x_lb, y_lb], [x_lb, y_ub], [x_ub, y_lb], [x_ub, y_ub]]
+    points_belong_circle = []
     for i in range(len(circles_used)):
+        points_belong_circle.append([])
         point, points_belong_circle = box_circles(x_lb, x_ub, y_lb, y_ub, circles_used, i, points_belong_circle)
         #print(f"We are looking at the circle: {circle} and it produces points :{point}")
         for p in point:
             #print(f"Point {p} is not in the list of points: {points}? {p not in points}")
-            if p not in points_belong_circle[i+4]:
-                points_belong_circle[i+4].append(p)
-            if p not in points:
-                points.append(p)
+            if type(p) != list:
+                n_point = [p]
+                p = n_point
+            interior = False
+            for c in circles_used:
+                if interior_circle(p,c):
+                    interior = True
+            if not interior:
+                if p not in points_belong_circle[i+4]:
+                    points_belong_circle[i+4].append(p)
+                if p not in points:
+                    points.append(p)
 
     # We now look at all of the intersections between the circles
     for i in range(n):
@@ -625,18 +676,21 @@ def feas_region_box_LP_cutting(x_lb : float, x_ub : float, y_lb : float, y_ub : 
             elif ((c1[0] - c2[0]) ** 2) + ((c1[1] - c2[1]) ** 2) >= c1[2] ** 2 + c2[2] ** 2:
                 continue
             else:
-                intersections = circles_circles(circles,i,j)
+                intersections = circles_circles(circles_used,i,j)
             for point in intersections:
-                if point not in points:
-                    interior = False
-                    if (x_lb <= point[0] <= x_ub) and (y_lb <= point[1] <= y_ub):
-                        for c in circles_used:
-                            if interior_circle(point, c) == True:
-                                interior = True
-                        if (not interior):
-                            points_belong_circle[i+4].append(point)
-                            points_belong_circle[j+4].append(point)
-                            points.append(point)
+                if type(point) != list:
+                    n_point = [point]
+                    point = n_point
+                interior = False
+                if (x_lb <= point[0] <= x_ub) and (y_lb <= point[1] <= y_ub):
+                    for c in circles_used:
+                        if interior_circle(point, c) == True:
+                            interior = True
+                    if (not interior):
+                        points_belong_circle[i+4].append(point)
+                        points_belong_circle[j+4].append(point)
+                        if point not in points:
+                               points.append(point)
 
 
     # We now split the points into convex hulls, i.e. the preliminary cut
@@ -705,8 +759,9 @@ def feas_region_box_GS(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
     # We now look at all of the intersections between the circles and the square
     m = len(circles_used) + 4
     points = [[x_lb, y_lb], [x_lb, y_ub], [x_ub, y_lb], [x_ub, y_ub]]
-    points_belong_circle = [[]]*m
+    points_belong_circle = []
     for i in range(len(circles_used)):
+        points_belong_circle.append([])
         point, points_belong_circle = box_circles(x_lb, x_ub, y_lb, y_ub, circles_used, i, points_belong_circle)
         #print(f"We are looking at the circle: {circle} and it produces points :{point}")
         for p in point:
@@ -715,14 +770,14 @@ def feas_region_box_GS(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
                 n_point = [p]
                 p = n_point
             interior = False
-            for c in circles:
+            for c in circles_used:
                 if interior_circle(p,c):
                     interior = True
-                if not interior:
-                    if p not in points_belong_circle[i+4]:
-                        points_belong_circle[i+4].append(p)
-                    if p not in points:
-                        points.append(p)
+            if not interior:
+                if p not in points_belong_circle[i+4]:
+                    points_belong_circle[i+4].append(p)
+                if p not in points:
+                    points.append(p)
 
     # We now look at all of the intersections between the circles
     for i in range(n):
@@ -738,16 +793,16 @@ def feas_region_box_GS(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
                 if type(point) != list:
                     n_point = [point]
                     point = n_point
-                if point not in points:
-                    interior = False
-                    if (x_lb <= point[0] <= x_ub) and (y_lb <= point[1] <= y_ub):
-                        for c in circles_used:
-                            if interior_circle(point, c) == True:
-                                interior = True
-                        if (not interior):
-                            points_belong_circle[i+4].append(point)
-                            points_belong_circle[j+4].append(point)
-                            points.append(point)
+                interior = False
+                if (x_lb <= point[0] <= x_ub) and (y_lb <= point[1] <= y_ub):
+                    for c in circles_used:
+                        if interior_circle(point, c) == True:
+                            interior = True
+                    if (not interior):
+                        points_belong_circle[i+4].append(point)
+                        points_belong_circle[j+4].append(point)
+                        if point not in points:
+                               points.append(point)
 
                         
     #We now create the new convex feasible region
@@ -808,8 +863,9 @@ def feas_region_box_GS_cutting(x_lb : float, x_ub : float, y_lb : float, y_ub : 
     # We now look at all of the intersections between the circles and the square
     m = len(circles_used) + 4
     points = [[x_lb, y_lb], [x_lb, y_ub], [x_ub, y_lb], [x_ub, y_ub]]
-    points_belong_circle = [[]]*m
+    points_belong_circle = []
     for i in range(len(circles_used)):
+        points_belong_circle.append([])
         point, points_belong_circle = box_circles(x_lb, x_ub, y_lb, y_ub, circles_used, i, points_belong_circle)
         #print(f"We are looking at the circle: {circle} and it produces points :{point}")
         for p in point:
@@ -818,14 +874,14 @@ def feas_region_box_GS_cutting(x_lb : float, x_ub : float, y_lb : float, y_ub : 
                 n_point = [p]
                 p = n_point
             interior = False
-            for c in circles:
+            for c in circles_used:
                 if interior_circle(p,c):
                     interior = True
-                if not interior:
-                    if p not in points_belong_circle[i+4]:
-                        points_belong_circle[i+4].append(p)
-                    if p not in points:
-                        points.append(p)
+            if not interior:
+                if p not in points_belong_circle[i+4]:
+                    points_belong_circle[i+4].append(p)
+                if p not in points:
+                    points.append(p)
 
     # We now look at all of the intersections between the circles
     for i in range(n):
@@ -841,24 +897,26 @@ def feas_region_box_GS_cutting(x_lb : float, x_ub : float, y_lb : float, y_ub : 
                 if type(point) != list:
                     n_point = [point]
                     point = n_point
-                if point not in points:
-                    interior = False
-                    if (x_lb <= point[0] <= x_ub) and (y_lb <= point[1] <= y_ub):
-                        for c in circles_used:
-                            if interior_circle(point, c) == True:
-                                interior = True
-                        if (not interior):
-                            points_belong_circle[i+4].append(point)
-                            points_belong_circle[j+4].append(point)
-                            points.append(point)
+                interior = False
+                if (x_lb <= point[0] <= x_ub) and (y_lb <= point[1] <= y_ub):
+                    for c in circles_used:
+                        if interior_circle(point, c) == True:
+                            interior = True
+                    if (not interior):
+                        points_belong_circle[i+4].append(point)
+                        points_belong_circle[j+4].append(point)
+                        if point not in points:
+                               points.append(point)
 
    # # We now split the points into convex hulls, i.e. the preliminary cut
-    subset_points = PC.preliminary_cuts(points_belong_circle, circles, x_lb, x_ub, y_lb, y_ub)
+    subset_points = PC.preliminary_cuts(points_belong_circle, circles_used, x_lb, x_ub, y_lb, y_ub)
        
     #We now create the new convex feasible region
-    pch = [[]] * len(subset_points)
-    dp = [[]] * len(subset_points)
+    pch = [] 
+    dp = []
     for p in range(len(subset_points)):
+        pch.append([])
+        dp.append([])
         pch[p], dp[p] = create_conv_region_GS(subset_points[p])  
                         
     if plot == True: 
