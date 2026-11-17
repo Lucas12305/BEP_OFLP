@@ -167,6 +167,33 @@ def preliminary_cuts(circles_belong_points : list, circles : list, x_lb : float,
     for i in range(4, m):
             print(f"We have a circle {circles[i - 4]} and it has the following points {circles_belong_points[i]}")
     connections = []
+
+    for sp in range(4,m):
+        set_of_points = circles_belong_points[sp]
+        connections.append([])
+        n = len(set_of_points)
+        if n <= 1:
+            continue
+        else:
+            a_p = []
+            for p in set_of_points:
+                a_p.append([p[0], p[1], IO.angle_points(circles[sp - 4], p)[0]])
+            
+            
+            # How do we sort, we want to sort such that the angle increases.
+            a_p.sort(key=lambda point: point[2])
+            for p in range(n):
+                p1, p2 = a_p[p], a_p[(p + 1) % n]
+                p_middle = IO.angle_to_points(circles[sp - 4], ((p2[2] - p1[2]) / 2 ) % (2 * math.pi))
+                # We now check if p_middle is inside some circle
+                p_middle_inside = False
+                if (x_lb <= p_middle[0] <= x_ub) and (y_lb <= p_middle[1] <= y_ub):
+                    for c in circles:
+                        if IO.interior_circle(p_middle,c):
+                            p_middle_inside = True
+                            break
+                    if not p_middle_inside:
+                        connections[sp].append([p1,p2])
     for sp in range(4):
         connections.append([])
         set_of_points = circles_belong_points[sp]
@@ -186,34 +213,6 @@ def preliminary_cuts(circles_belong_points : list, circles : list, x_lb : float,
             if not p_middle_inside:
                 connections[sp].append([p1,p2])
 
-
-    for sp in range(4,m):
-        set_of_points = circles_belong_points[sp]
-        connections.append([])
-        n = len(set_of_points)
-        if n <= 1:
-            continue
-        else:
-            a_p = []
-            for p in set_of_points:
-                a_p.append([p[0], p[1], IO.angle_points(circles[sp - 4], p1)[0]])
-            
-            
-            # How do we sort, we want to sort such that the angle increases.
-            a_p.sort(key=lambda point: point[2])
-            for p in range(n):
-                p1, p2 = a_p[p], a_p[(p + 1) % n]
-                p_middle = IO.angle_to_points(circles[sp - 4], ((p2[2] - p1[2]) / 2 ) % (2 * math.pi))
-                # We now check if p_middle is inside some circle
-                p_middle_inside = False
-                if (x_lb <= p_middle[0] <= x_ub) and (y_lb <= p_middle[1] <= y_ub):
-                    for c in circles:
-                        if IO.interior_circle(p_middle,c):
-                            p_middle_inside = True
-                            break
-                    if not p_middle_inside:
-                        connections[sp].append([p1,p2])
-
     # We now have a list of all of the sorted connections inside the circles. 
     # This means that we can pick a point and then go both ways, one way is that we go up in index, and the other we go down.
     # This way we handle cases in which a point is made by two circles that intersect exaclty at a point
@@ -227,8 +226,8 @@ def preliminary_cuts(circles_belong_points : list, circles : list, x_lb : float,
         # We take a connection out of the list, so every iteration the list gets shorter
         p1, p2 = connections_left.pop(0)
         set_i = [p1, p2]
-        stop_first = IO.at_bound(p1, x_lb, x_ub, y_lb, y_ub)
-        stop_last = IO.at_bound(p2, x_lb, x_ub, y_lb, y_ub)
+        stop_first = False
+        stop_last = False
 
         found = True
         while found and not (stop_first and stop_last):
@@ -242,10 +241,6 @@ def preliminary_cuts(circles_belong_points : list, circles : list, x_lb : float,
                     set_i.insert(0, con[0])
                     connections_left.remove(con)
                     found = True
-            if IO.at_bound(set_i[0], x_lb, x_ub, y_lb, y_ub):
-                stop_first = True
-            if IO.at_bound(set_i[-1], x_lb, x_ub, y_lb, y_ub):
-                stop_last = True
             if same_point(set_i[0], set_i[-1]):
                 stop_first = True
                 stop_last = True
