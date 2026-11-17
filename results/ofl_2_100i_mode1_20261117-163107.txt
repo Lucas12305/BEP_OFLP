@@ -1,0 +1,15 @@
+Instance: ofl_2_100i.gms
+Traceback (most recent call last):
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/run_OFLP.py", line 283, in <module>
+    main()
+    ~~~~^^
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/run_OFLP.py", line 278, in main
+    run(instance, args.mode, plot=args.plot_file is not None, plot_file=args.plot_file, presolve_limit=600, time_limit=args.time_limit, precutting=args.precutting, seperator=args.seperator)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/run_OFLP.py", line 173, in run
+    sorted_points, deleted_points = IO.feas_region_box_GS_cutting(x_lb,x_ub,y_lb,y_ub,circles)
+                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/Convex_hull.py", line 955, in feas_region_box_GS_cutting
+    points_belong_circle.append([])
+    ^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'points_belong_circle' where it is not associated with a value

@@ -645,9 +645,38 @@ def feas_region_box_LP_cutting(x_lb : float, x_ub : float, y_lb : float, y_ub : 
         circles_used.remove(circles_used[index])
     
     # We now look at all of the intersections between the circles and the square
-    m = len(circles_used) + 4
-    points = [[x_lb, y_lb], [x_lb, y_ub], [x_ub, y_lb], [x_ub, y_ub]]
-    points_belong_circle = []
+        m = len(circles_used) + 4
+        points = []
+        points_belong_circle = [[], [], [], []]
+        p1f, p2f, p3f, p4f = True, True, True, True
+        for c in circles_used:
+            if not (p1f or p2f or p3f or p4f):
+                break
+            if interior_circle([x_lb,y_lb], c):
+                p1f = False
+            if interior_circle([x_ub,y_lb], c):
+                p2f = False
+            if interior_circle([x_ub,y_ub], c):
+                p3f = False
+            if interior_circle([x_lb,y_ub], c):
+                p4f = False
+        if p1f:
+            points.append([x_lb, y_lb])
+            points_belong_circle[0].append([x_lb, y_lb])
+            points_belong_circle[2].append([x_lb, y_lb])
+        if p2f:
+            points.append([x_ub, y_lb])
+            points_belong_circle[1].append([x_ub, y_lb])
+            points_belong_circle[2].append([x_ub, y_lb])
+        if p3f:
+            points.append([x_ub, y_ub])
+            points_belong_circle[1].append([x_ub, y_ub])
+            points_belong_circle[3].append([x_ub, y_ub])
+        if p4f:
+            points.append([x_lb, y_ub])
+            points_belong_circle[3].append([x_lb, y_ub])
+            points_belong_circle[0].append([x_lb, y_ub])
+
     for i in range(len(circles_used)):
         points_belong_circle.append([])
         point, points_belong_circle = box_circles(x_lb, x_ub, y_lb, y_ub, circles_used, i, points_belong_circle)
@@ -757,9 +786,38 @@ def feas_region_box_GS(x_lb : float, x_ub : float, y_lb : float, y_ub : float, c
         circles_used.remove(circles_used[index])
     
     # We now look at all of the intersections between the circles and the square
-    m = len(circles_used) + 4
-    points = [[x_lb, y_lb], [x_lb, y_ub], [x_ub, y_lb], [x_ub, y_ub]]
-    points_belong_circle = []
+        m = len(circles_used) + 4
+        points = []
+        points_belong_circle = [[], [], [], []]
+        p1f, p2f, p3f, p4f = True, True, True, True
+        for c in circles_used:
+            if not (p1f or p2f or p3f or p4f):
+                break
+            if interior_circle([x_lb,y_lb], c):
+                p1f = False
+            if interior_circle([x_ub,y_lb], c):
+                p2f = False
+            if interior_circle([x_ub,y_ub], c):
+                p3f = False
+            if interior_circle([x_lb,y_ub], c):
+                p4f = False
+        if p1f:
+            points.append([x_lb, y_lb])
+            points_belong_circle[0].append([x_lb, y_lb])
+            points_belong_circle[2].append([x_lb, y_lb])
+        if p2f:
+            points.append([x_ub, y_lb])
+            points_belong_circle[1].append([x_ub, y_lb])
+            points_belong_circle[2].append([x_ub, y_lb])
+        if p3f:
+            points.append([x_ub, y_ub])
+            points_belong_circle[1].append([x_ub, y_ub])
+            points_belong_circle[3].append([x_ub, y_ub])
+        if p4f:
+            points.append([x_lb, y_ub])
+            points_belong_circle[3].append([x_lb, y_ub])
+            points_belong_circle[0].append([x_lb, y_ub])
+
     for i in range(len(circles_used)):
         points_belong_circle.append([])
         point, points_belong_circle = box_circles(x_lb, x_ub, y_lb, y_ub, circles_used, i, points_belong_circle)
@@ -861,9 +919,38 @@ def feas_region_box_GS_cutting(x_lb : float, x_ub : float, y_lb : float, y_ub : 
         circles_used.remove(circles_used[index])
     
     # We now look at all of the intersections between the circles and the square
-    m = len(circles_used) + 4
-    points = [[x_lb, y_lb], [x_lb, y_ub], [x_ub, y_lb], [x_ub, y_ub]]
-    points_belong_circle = []
+        m = len(circles_used) + 4
+        points = []
+        points_belong_circle = [[], [], [], []]
+        p1f, p2f, p3f, p4f = True, True, True, True
+        for c in circles_used:
+            if not (p1f or p2f or p3f or p4f):
+                break
+            if interior_circle([x_lb,y_lb], c):
+                p1f = False
+            if interior_circle([x_ub,y_lb], c):
+                p2f = False
+            if interior_circle([x_ub,y_ub], c):
+                p3f = False
+            if interior_circle([x_lb,y_ub], c):
+                p4f = False
+        if p1f:
+            points.append([x_lb, y_lb])
+            points_belong_circle[0].append([x_lb, y_lb])
+            points_belong_circle[2].append([x_lb, y_lb])
+        if p2f:
+            points.append([x_ub, y_lb])
+            points_belong_circle[1].append([x_ub, y_lb])
+            points_belong_circle[2].append([x_ub, y_lb])
+        if p3f:
+            points.append([x_ub, y_ub])
+            points_belong_circle[1].append([x_ub, y_ub])
+            points_belong_circle[3].append([x_ub, y_ub])
+        if p4f:
+            points.append([x_lb, y_ub])
+            points_belong_circle[3].append([x_lb, y_ub])
+            points_belong_circle[0].append([x_lb, y_ub])
+            
     for i in range(len(circles_used)):
         points_belong_circle.append([])
         point, points_belong_circle = box_circles(x_lb, x_ub, y_lb, y_ub, circles_used, i, points_belong_circle)
