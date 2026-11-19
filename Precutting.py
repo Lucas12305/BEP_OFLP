@@ -130,7 +130,7 @@ def creating_and_guessing(facilities, communities, x_lb, x_ub, y_lb, y_ub, fac_f
     return r_guess
 
 
-def combinations(facilities : int, poss_places : int) -> int:
+def combinations(facilities : int, poss_places : int, subset_of_hulls : list, fac_fac_dist : float, x_lb, x_ub, y_lb, y_ub) -> int:
     '''
     This definition creates a list of lists of all of the possible combinations of facilities and hulls that can be
     :param facilities: The number of facilities.
@@ -139,23 +139,34 @@ def combinations(facilities : int, poss_places : int) -> int:
     if poss_places <= 0:
         return []
 
+    max_per_hull = max_fac_per_hull(subset_of_hulls, facilities, fac_fac_dist, x_lb, x_ub, y_lb, y_ub)
+
+    # capacity left in hulls h, h+1, ..., last
+    capacity_from = [0] * (poss_places + 1)
+    for h in range(poss_places - 1, -1, -1):
+        capacity_from[h] = capacity_from[h + 1] + max_per_hull[h]
+
     all_counts = [[]]
     for h in range(poss_places - 1):
         new_counts = []
         for counts in all_counts:
             used = sum(counts)
-            for k in range(facilities - used + 1):
-                new_counts.append(counts + [k])
+            for k in range(int(min(facilities - used, max_per_hull[h])) + 1):
+                # the remaining facilities must still fit in the later hulls
+                if facilities - used - k <= capacity_from[h + 1]:
+                    new_counts.append(counts + [k])
         all_counts = new_counts
 
     result = []
     for counts in all_counts:
-        result.append(counts + [facilities - sum(counts)])
+        last = facilities - sum(counts)
+        if last <= max_per_hull[poss_places - 1]:
+            result.append(counts + [last])
     return result
 
 
 
-def preliminary_cuts(circles_belong_points : list, circles : list, x_lb : float, x_ub : float, y_lb : float, y_ub : float) -> list:
+def preliminary_cuts(circles_belong_points : list, circles : list, x_lb : float, x_ub : float, y_lb : float, y_ub : float, plot : bool=False) -> list:
     '''
     This definition takes a set of feasible points in the form of [x,y, circle, circle/box bound].
     It then sees for every circle the intersections and connects the points that should be connected.
@@ -250,31 +261,64 @@ def preliminary_cuts(circles_belong_points : list, circles : list, x_lb : float,
                 stop_last = True
         subsets_of_hulls.append(set_i)
     print(f"We have derived {len(subsets_of_hulls)} subsets of hulls.")
-    # A plot of all of the subsets of hulls, with the number of subsets in the title
-    fig, ax = plt.subplots()
-    box = patches.Rectangle((x_lb, y_lb), x_ub - x_lb, y_ub - y_lb, linewidth=3, edgecolor='black', facecolor='none')
-    ax.add_patch(box)
-    for c in circles:
-        circle = patches.Circle((c[0], c[1]), c[2], linewidth=1, edgecolor='grey', facecolor='lightgrey', alpha=0.4)
-        ax.add_patch(circle)
 
-    colors = plt.cm.tab20.colors
-    for k in range(len(subsets_of_hulls)):
-        xs = []
-        ys = []
-        for p in subsets_of_hulls[k]:
-            xs.append(p[0])
-            ys.append(p[1])
-        color = colors[k % len(colors)]
-        ax.plot(xs, ys, '-o', color=color, linewidth=2, markersize=4)
-        # The number of the subset is written at the middle point of the subset
-        mid = subsets_of_hulls[k][len(subsets_of_hulls[k]) // 2]
-        ax.text(mid[0], mid[1], str(k), color=color, fontsize=12, fontweight='bold')
+    if plot:
+        # A plot of all of the subsets of hulls, with the number of subsets in the title
+        fig, ax = plt.subplots()
+        box = patches.Rectangle((x_lb, y_lb), x_ub - x_lb, y_ub - y_lb, linewidth=3, edgecolor='black', facecolor='none')
+        ax.add_patch(box)
+        for c in circles:
+            circle = patches.Circle((c[0], c[1]), c[2], linewidth=1, edgecolor='grey', facecolor='lightgrey', alpha=0.4)
+            ax.add_patch(circle)
 
-    ax.set_xlim(x_lb - abs(x_lb - x_ub) / 10, x_ub + abs(x_lb - x_ub) / 10)
-    ax.set_ylim(y_lb - abs(y_lb - y_ub) / 10, y_ub + abs(y_lb - y_ub) / 10)
-    ax.set_aspect('equal')
-    ax.set_title(f"{len(subsets_of_hulls)} subsets of hulls")
-    plt.grid(True)
-    plt.show()
+    
+        colors = plt.cm.tab20.colors
+        for k in range(len(subsets_of_hulls)):
+            xs = []
+            ys = []
+            for p in subsets_of_hulls[k]:
+                xs.append(p[0])
+                ys.append(p[1])
+            color = colors[k % len(colors)]
+            ax.plot(xs, ys, '-o', color=color, linewidth=2, markersize=4)
+            # The number of the subset is written at the middle point of the subset
+            mid = subsets_of_hulls[k][len(subsets_of_hulls[k]) // 2]
+            ax.text(mid[0], mid[1], str(k), color=color, fontsize=12, fontweight='bold')
+
+        ax.set_xlim(x_lb - abs(x_lb - x_ub) / 10, x_ub + abs(x_lb - x_ub) / 10)
+        ax.set_ylim(y_lb - abs(y_lb - y_ub) / 10, y_ub + abs(y_lb - y_ub) / 10)
+        ax.set_aspect('equal')
+        ax.set_title(f"{len(subsets_of_hulls)} subsets of hulls")
+        plt.grid(True)
+        plt.show()
     return subsets_of_hulls
+
+
+def max_fac_per_hull(subset_of_hulls, facilities, fac_fac_dist, x_lb, x_ub, y_lb, y_ub) -> list:
+    # We now look at the maximum amount of facilities that can lie in the different hulls.
+    max_fac_hull = []
+    for hull in subset_of_hulls:
+        min_x, max_x = x_ub, x_lb
+        min_y, max_y = y_ub, y_lb
+        for point in hull:
+            if point[0] <= min_x:
+                min_x = point[0]
+            if point[1] <= min_y:
+                min_y = point[1]
+            if point[0] >= max_x:
+                max_x = point[0]
+            if point[1] >= max_y:
+                max_y = point[1]
+
+        Maxhull_LP = Model()
+        Facilities_x = [Maxhull_LP.addVar(vtype='C', lb=min_x, ub=max_x, name=f"x_{i}") for i in range(facilities)]
+        Facilities_y = [Maxhull_LP.addVar(vtype='C', lb=min_y, ub=max_y, name=f"y_{i}") for i in range(facilities)]
+        Fac_used = [Maxhull_LP.addVar(vtype='B', lb=0, ub=1, name=f"Facility {i} is used", obj=1.0) for i in range(facilities)]
+        for i in range(facilities):
+            for j in range(i + 1, facilities):
+                Maxhull_LP.addCons((Facilities_x[i] - Facilities_x[j]) ** 2 + (Facilities_y[i] - Facilities_y[j]) ** 2 >= fac_fac_dist * Fac_used[i] * Fac_used[j])
+        Maxhull_LP.setMaximize()
+        Maxhull_LP.hideOutput()
+        Maxhull_LP.optimize()
+        max_fac_hull.append(Maxhull_LP.getObjVal())
+    return max_fac_hull

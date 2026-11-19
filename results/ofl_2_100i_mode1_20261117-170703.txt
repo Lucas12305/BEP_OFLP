@@ -1,2 +1,0 @@
-Instance: ofl_2_100i.gms
-We have derived 5 subsets of hulls.

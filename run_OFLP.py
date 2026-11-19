@@ -88,164 +88,105 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
 
 
 
-
-
-
     else: # Precutting == 1
-        # We divide into the different sets
         if mode == 0:
             start = time.perf_counter()
+            # We divide into the different sets
             points, planes = IO.feas_region_box_LP_cutting(x_lb,x_ub,y_lb,y_ub,circles)
             poss_places = len(points)
-            subproblems_combinations = PC.combinations(facilities, poss_places)
+            subproblems_combinations = PC.combinations(facilities, poss_places, points, min_FF_dist, x_lb, x_ub, y_lb, y_ub)
             best_found_sol = Init_sol[0] ** 2
-            index_bfs = [-1]
-            # We now want to create all of the subproblem
-            print(f"We are going to be looking at {len(subproblems_combinations)} combinations. After the best possible solution will be pasted.")
-            OFP = {}
-            pbar = tqdm(range(len(subproblems_combinations)), desc="Subproblems")
-            for i in pbar:
-                comb = subproblems_combinations[i]    
-                OFP[i] = Model(f'OFP_{i} problem with {facilities} facilities (with minimal distance {min_FF_dist}) and {len(circles)} communities and combinations {comb}.')
-                ObnFacilities_x = [OFP[i].addVar(vtype='C', lb=x_lb, ub=x_ub, name=f"x_{i}") for i in range(facilities)]
-                ObnFacilities_y = [OFP[i].addVar(vtype='C', lb=y_lb, ub=y_ub, name=f"y_{i}") for i in range(facilities)]
-                for i in range(facilities):
-                    var = [ObnFacilities_x[i], ObnFacilities_y[i]]
-                    # The minimal distance between the facilities has to be added to OFP, and a facility does not need a distance to itself
-                    for j in range(i + 1, facilities):
-                        var2 = [ObnFacilities_x[j], ObnFacilities_y[j]]
-                        OFP[i].addCons(CLP.distance(var, var2) >= min_FF_dist, f'MinDistF{i}_F{j}')
-                    
-                    # Now comes the extra step, here we specifically make it so that the facilities are in a certain spot
-                    for i in range(poss_places):
-                        if comb[i] != 0:
-                            comb[i] -= 1
-                            CLP.add_conv_hull_cons_precut_LP(OFP[i], ObnFacilities_x[i], ObnFacilities_y[i], planes[i])
-                            break
-                CLP.create_objective(OFP[i], ObnFacilities_x,ObnFacilities_y, circles, best_found_sol)
-                if time_limit is not None:
-                    OFP[i].setParam('limits/time', time_limit)
-                else:
-                    OFP[i].setParam('limits/time', (3600))
-                OFP[i].optimize()
-                L = OFP[i].getObjVal() 
-                if L > best_found_sol:
-                    best_found_sol = L
-                    index_bfs = [i]
-                elif L == best_found_sol:
-                    index_bfs = index_bfs + [i]
-                pbar.set_postfix(best_radius=f"{np.sqrt(best_found_sol):.4f}")
+            index_bfs = [-1]       
 
-            for j in index_bfs:
-                if j == -1:
-                    print(f"The best solution found was the initials solution: {Init_sol}, there should also be another solution with the same points with more insights.")
-                OFP[j].printStatistics()
-                OFP[j].printBestSol()
-                
-            total_time = time.perf_counter() - start
-            # A short summary at the end, so that the result is easy to find in the text file
-            print("=" * 60)
-            print("Summary")
-            print(f"Facilities: {facilities}, communities: {len(communities)}, mode: {mode}, precutting: {precutting}, seperator: {seperator}")
-            print(f"Status: {OFP[j].getStatus()}, total time: {total_time:.2f} s")
-            solution = AL.get_solution(OFP[j], instance)
-            if solution is None:
-                print("No solution was found.")
-            else:
-                facility_points, L = solution
-                print(f"Objective L (squared distance): {L}")
-                print(f"Radius sqrt(L): {np.sqrt(L)}")
-                for i, f in enumerate(facility_points):
-                    print(f"Facility {i}: x = {f[0]}, y = {f[1]}")
-            print("=" * 60, flush=True)
-        
-            if plot == True:
-                PLOT.plot_solution(OFP[j], instance, plot_file)
-            return None         
 
-        
-        
-        
-        
-        
-        
-        
-        
         else: # mode == 1
             start = time.perf_counter()
             # We divide into the different sets
-            sorted_points, deleted_points = IO.feas_region_box_GS_cutting(x_lb,x_ub,y_lb,y_ub,circles)
+            sorted_points = IO.feas_region_box_GS_cutting(x_lb,x_ub,y_lb,y_ub,circles)[0]
             poss_places = len(sorted_points)
-            subproblems_combinations = PC.combinations(facilities, poss_places)
+            subproblems_combinations = PC.combinations(facilities, poss_places, sorted_points, min_FF_dist, x_lb, x_ub, y_lb, y_ub)
             best_found_sol = Init_sol[0] ** 2
-            index_bfs = [-1]
-            # We now want to create all of the subproblem
-            print(f"We are going to be looking at {len(subproblems_combinations)} combinations. After the best possible solution will be pasted.")
-            OFP = {}
-            pbar = tqdm(range(len(subproblems_combinations)), desc="Subproblems")
-            for i in pbar:
-                comb = subproblems_combinations[i]    
-                OFP[i] = Model(f'OFP_{i} problem with {facilities} facilities (with minimal distance {min_FF_dist}) and {len(circles)} communities and combinations {comb}.')
-                ObnFacilities_x = [OFP[i].addVar(vtype='C', lb=x_lb, ub=x_ub, name=f"x_{j}") for j in range(facilities)]
-                ObnFacilities_y = [OFP[i].addVar(vtype='C', lb=y_lb, ub=y_ub, name=f"y_{j}") for j in range(facilities)]
-                for l in range(facilities):
-                    var = [ObnFacilities_x[l], ObnFacilities_y[l]]
-                    # The minimal distance between the facilities has to be added to OFP, and a facility does not need a distance to itself
-                    for k in range(l + 1, facilities):
-                        var2 = [ObnFacilities_x[k], ObnFacilities_y[k]]
-                        OFP[i].addCons(((var[0] - var2[0]) ** 2 + (var[1] - var2[1]) ** 2) >= min_FF_dist, f'MinDistF{l}_F{k}')
-                    
-                    # Now comes the extra step, here we specifically make it so that the facilities are in a certain spot
-                    for m in range(poss_places):
-                        if comb[m] != 0:
-                            comb[m] -= 1
-                            CLP.add_conv_hull_cons_precut_GS(OFP[i], var[0], var[1], sorted_points[m])
-                            break
-
-                CLP.create_objective(OFP[i], ObnFacilities_x,ObnFacilities_y, circles, best_found_sol)
-                if time_limit is not None:
-                    OFP[i].setParam('limits/time', time_limit)
-                else:
-                    OFP[i].setParam('limits/time', (3600))
+            index_bfs = [-1] 
+            
+            
+        # We now want to create all of the subproblem
+        print(f"We are going to be looking at {len(subproblems_combinations)} combinations. After the best possible solution will be pasted.")
+        OFP = {}
+        OFP_optimal = {}
+        pbar = tqdm(range(len(subproblems_combinations)), desc="Subproblems")
+        for i in pbar:
+            comb = subproblems_combinations[i]    
+            OFP[i] = Model(f'OFP_{i} problem with {facilities} facilities (with minimal distance {min_FF_dist}) and {len(circles)} communities and combinations {comb}.')
+            ObnFacilities_x = [OFP[i].addVar(vtype='C', lb=x_lb, ub=x_ub, name=f"x_{j}") for j in range(facilities)]
+            ObnFacilities_y = [OFP[i].addVar(vtype='C', lb=y_lb, ub=y_ub, name=f"y_{j}") for j in range(facilities)]
+            for l in range(facilities):
+                var = [ObnFacilities_x[l], ObnFacilities_y[l]]
+                # The minimal distance between the facilities has to be added to OFP, and a facility does not need a distance to itself
+                for k in range(l + 1, facilities):
+                    var2 = [ObnFacilities_x[k], ObnFacilities_y[k]]
+                    OFP[i].addCons(((var[0] - var2[0]) ** 2 + (var[1] - var2[1]) ** 2) >= min_FF_dist, f'MinDistF{l}_F{k}')
                 
-                OFP[i].hideOutput()
-                OFP[i].optimize()
-                if OFP[i].getNSols() > 0:
-                    L = OFP[i].getObjVal()
-                    if L > best_found_sol:
-                        best_found_sol = L
-                        index_bfs = [i]
-                    elif L == best_found_sol:
-                        index_bfs = index_bfs + [i]
-                pbar.set_postfix(best_radius=f"{np.sqrt(best_found_sol):.4f}")
+                # Now comes the extra step, here we specifically make it so that the facilities are in a certain spot
+                for m in range(poss_places):
+                    if comb[m] != 0:
+                        comb[m] -= 1
+                        CLP.add_conv_hull_cons_precut_GS(OFP[i], var[0], var[1], sorted_points[m])
+                        break
 
-            
-            for j in index_bfs:
-                if j == -1:
-                    print(f"The best solution found was the initials solution: {Init_sol}, there should also be another solution with the same points with more insights.")
-                OFP[j].printStatistics()
-                OFP[j].printBestSol()
-
-            total_time = time.perf_counter() - start    
-            # A short summary at the end, so that the result is easy to find in the text file
-            print("=" * 60)
-            print("Summary")
-            print(f"Facilities: {facilities}, communities: {len(communities)}, mode: {mode}, precutting: {precutting}, seperator: {seperator}")
-            print(f"Status: {OFP[j].getStatus()}, total time: {total_time:.2f} s")
-            solution = AL.get_solution(OFP[j], instance)
-            if solution is None:
-                print("No solution was found.")
+            CLP.create_objective(OFP[i], ObnFacilities_x,ObnFacilities_y, circles, best_found_sol)
+            if time_limit is not None:
+                OFP[i].setParam('limits/time', time_limit)
             else:
-                facility_points, L = solution
-                print(f"Objective L (squared distance): {L}")
-                print(f"Radius sqrt(L): {np.sqrt(L)}")
-                for i, f in enumerate(facility_points):
-                    print(f"Facility {i}: x = {f[0]}, y = {f[1]}")
-            print("=" * 60, flush=True)
+                OFP[i].setParam('limits/time', (3600))
             
-            if plot == True:
-                PLOT.plot_solution(OFP[j], instance, plot_file)
-            return None     
+            OFP[i].hideOutput()
+            OFP[i].optimize()
+            if OFP[i].getNSols() > 0:
+                L = OFP[i].getObjVal()
+                if L > best_found_sol:
+                    best_found_sol = L
+                    index_bfs = [i]
+                    for OFPI in OFP_optimal.values():
+                        OFPI.freeProb()
+                    OFP_optimal = {i : OFP[i]}
+                elif abs(L - best_found_sol) < 1e-9:
+                    index_bfs = index_bfs + [i]
+                    OFP_optimal[i] = OFP[i]
+                else:
+                    OFP[i].freeProb()
+            else:
+                OFP[i].freeProb()
+            
+            del OFP[i]
+            pbar.set_postfix(best_radius=f"{np.sqrt(best_found_sol):.4f}")
+
+        
+        for j in index_bfs:
+            if j == -1:
+                print(f"The best solution found was the initials solution: {Init_sol}, there should also be another solution with the same points with more insights.")
+            OFP_optimal[j].printStatistics()
+            OFP_optimal[j].printBestSol()
+
+        total_time = time.perf_counter() - start    
+        # A short summary at the end, so that the result is easy to find in the text file
+        print("=" * 60)
+        print("Summary")
+        print(f"Facilities: {facilities}, communities: {len(communities)}, mode: {mode}, precutting: {precutting}, seperator: {seperator}")
+        print(f"Status: {OFP[j].getStatus()}, total time: {total_time:.2f} s")
+        solution = AL.get_solution(OFP[j], instance)
+        if solution is None:
+            print("No solution was found.")
+        else:
+            facility_points, L = solution
+            print(f"Objective L (squared distance): {L}")
+            print(f"Radius sqrt(L): {np.sqrt(L)}")
+            for i, f in enumerate(facility_points):
+                print(f"Facility {i}: x = {f[0]}, y = {f[1]}")
+        print("=" * 60, flush=True)
+        
+        if plot == True:
+            PLOT.plot_solution(OFP[j], instance, plot_file)
+        return None     
             
 
 

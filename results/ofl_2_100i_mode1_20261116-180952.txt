@@ -1,14 +1,0 @@
-Instance: ofl_2_100i.gms
-We are going to be looking at 67161 combinations. After the best possible solution will be pasted.
-Subproblems:   0%|          | 0/67161 [00:00<?, ?it/s]Subproblems:   0%|          | 0/67161 [00:00<?, ?it/s]
-Traceback (most recent call last):
-  File "/Users/lucasklaasse/Desktop/BEP_OFLP/run_OFLP.py", line 269, in <module>
-    main()
-    ~~~~^^
-  File "/Users/lucasklaasse/Desktop/BEP_OFLP/run_OFLP.py", line 264, in main
-    run(instance, args.mode, plot=args.plot_file is not None, plot_file=args.plot_file, presolve_limit=600, time_limit=args.time_limit, precutting=args.precutting, seperator=args.seperator)
-    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/lucasklaasse/Desktop/BEP_OFLP/run_OFLP.py", line 214, in run
-    pbar.set_postfix(best_radius=f"{np.sqrt(best_found_sol):.4f}")
-                                    ~~~~~~~^^^^^^^^^^^^^^^^
-ValueError: setting an array element with a sequence. The requested array has an inhomogeneous shape after 1 dimensions. The detected shape was (2,) + inhomogeneous part.

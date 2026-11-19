@@ -1,0 +1,13 @@
+Instance: ofl_2_100i.gms
+We have derived 4 subsets of hulls.
+Traceback (most recent call last):
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/run_OFLP.py", line 279, in <module>
+    main()
+    ~~~~^^
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/run_OFLP.py", line 274, in main
+    run(instance, args.mode, plot=args.plot_file is not None, plot_file=args.plot_file, presolve_limit=600, time_limit=args.time_limit, precutting=args.precutting, seperator=args.seperator)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/run_OFLP.py", line 179, in run
+    subproblems_combinations = PC.combinations(facilities, poss_places, points, min_FF_dist)
+                                                                        ^^^^^^
+UnboundLocalError: cannot access local variable 'points' where it is not associated with a value

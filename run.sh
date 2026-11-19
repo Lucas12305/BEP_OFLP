@@ -23,7 +23,7 @@ MODE=1
 # 0 is LP, 1 is GS
 PLOT=0
 # 0 is off, 1 is on
-PRECUTTING=1
+PRECUTTING=0
 # 0 is off, 1 is on
 SEPERATOR=0
 # 0 is off, 1 is on

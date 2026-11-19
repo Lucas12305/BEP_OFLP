@@ -1,0 +1,149 @@
+Instance: ofl_2_100i.gms
+We have derived 4 subsets of hulls.
+feasible solution found by trivial heuristic after 0.0 seconds, objective value 0.000000e+00
+presolving:
+(round 1, exhaustive) 0 del vars, 0 del conss, 1 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 0 upgd conss, 0 impls, 0 clqs, 1 implints
+(round 2, fast)       1 del vars, 0 del conss, 1 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 1 upgd conss, 0 impls, 0 clqs, 0 implints
+(round 3, fast)       2 del vars, 1 del conss, 1 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 1 upgd conss, 0 impls, 0 clqs, 0 implints
+(round 4, fast)       3 del vars, 1 del conss, 1 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 1 upgd conss, 0 impls, 0 clqs, 0 implints
+(round 5, exhaustive) 3 del vars, 1 del conss, 5 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 1 upgd conss, 0 impls, 0 clqs, 0 implints
+   (0.0s) symmetry computation started: requiring (bin +, int +, cont +), (fixed: bin -, int -, cont -)
+   (0.0s) symmetry computation finished: 2 generators found (max: 1500, log10 of symmetry group size: 0.60) (symcode time: 0.00)
+dynamic symmetry handling statistics:
+   orbitopal reduction:       no components
+   orbital reduction:         no components
+   lexicographic reduction:   no permutations
+handled 2 out of 2 symmetry components
+(round 6, exhaustive) 3 del vars, 1 del conss, 7 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 1 upgd conss, 0 impls, 0 clqs, 0 implints
+presolving (7 rounds: 7 fast, 4 medium, 4 exhaustive):
+ 3 deleted vars, 1 deleted constraints, 7 added constraints, 1 tightened bounds, 0 added holes, 0 changed sides, 0 changed coefficients
+ 0 implications, 0 cliques, 0 implied integral variables (0 bin, 0 int, 0 cont)
+presolved problem has 4 variables (0 bin, 0 int, 4 cont) and 7 constraints
+      2 constraints of type <linear>
+      4 constraints of type <bounddisjunction>
+      1 constraints of type <nonlinear>
+transformed objective value is always integral (scale: 1)
+Presolving Time: 0.01
+
+ time | node  | left  |LP iter|LP it/n|mem/heur|mdpt |vars |cons |rows |cuts |sepa|confs|strbr|  dualbound   | primalbound  |  gap   | compl. 
+t 0.0s|     1 |     0 |     0 |     - | trivial|   0 |   4 |   7 |   0 |   0 |  0 |   0 |   0 | 1.000000e+00 | 1.000000e+00 |   0.00%| unknown
+
+SCIP Status        : problem is solved [optimal solution found]
+Solving Time (sec) : 0.02
+Solving Nodes      : 1
+Primal Bound       : +1.00000000000000e+00 (5 solutions)
+Dual Bound         : +1.00000000000000e+00
+Gap                : 0.00 %
+feasible solution found by trivial heuristic after 0.0 seconds, objective value 0.000000e+00
+presolving:
+(round 1, exhaustive) 0 del vars, 0 del conss, 1 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 0 upgd conss, 0 impls, 0 clqs, 1 implints
+(round 2, fast)       1 del vars, 0 del conss, 1 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 1 upgd conss, 0 impls, 0 clqs, 0 implints
+(round 3, fast)       2 del vars, 1 del conss, 1 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 1 upgd conss, 0 impls, 0 clqs, 0 implints
+(round 4, fast)       3 del vars, 1 del conss, 1 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 1 upgd conss, 0 impls, 0 clqs, 0 implints
+(round 5, exhaustive) 3 del vars, 1 del conss, 5 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 1 upgd conss, 0 impls, 0 clqs, 0 implints
+   (0.0s) symmetry computation started: requiring (bin +, int +, cont +), (fixed: bin -, int -, cont -)
+   (0.0s) symmetry computation finished: 2 generators found (max: 1500, log10 of symmetry group size: 0.60) (symcode time: 0.00)
+dynamic symmetry handling statistics:
+   orbitopal reduction:       no components
+   orbital reduction:         no components
+   lexicographic reduction:   no permutations
+handled 2 out of 2 symmetry components
+(round 6, exhaustive) 3 del vars, 1 del conss, 7 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 1 upgd conss, 0 impls, 0 clqs, 0 implints
+presolving (7 rounds: 7 fast, 4 medium, 4 exhaustive):
+ 3 deleted vars, 1 deleted constraints, 7 added constraints, 1 tightened bounds, 0 added holes, 0 changed sides, 0 changed coefficients
+ 0 implications, 0 cliques, 0 implied integral variables (0 bin, 0 int, 0 cont)
+presolved problem has 4 variables (0 bin, 0 int, 4 cont) and 7 constraints
+      2 constraints of type <linear>
+      4 constraints of type <bounddisjunction>
+      1 constraints of type <nonlinear>
+transformed objective value is always integral (scale: 1)
+Presolving Time: 0.00
+
+ time | node  | left  |LP iter|LP it/n|mem/heur|mdpt |vars |cons |rows |cuts |sepa|confs|strbr|  dualbound   | primalbound  |  gap   | compl. 
+t 0.0s|     1 |     0 |     0 |     - | trivial|   0 |   4 |   7 |   0 |   0 |  0 |   0 |   0 | 1.000000e+00 | 1.000000e+00 |   0.00%| unknown
+
+SCIP Status        : problem is solved [optimal solution found]
+Solving Time (sec) : 0.00
+Solving Nodes      : 1
+Primal Bound       : +1.00000000000000e+00 (5 solutions)
+Dual Bound         : +1.00000000000000e+00
+Gap                : 0.00 %
+feasible solution found by trivial heuristic after 0.0 seconds, objective value 0.000000e+00
+presolving:
+(round 1, exhaustive) 0 del vars, 0 del conss, 1 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 0 upgd conss, 0 impls, 0 clqs, 1 implints
+(round 2, fast)       1 del vars, 0 del conss, 1 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 1 upgd conss, 0 impls, 0 clqs, 0 implints
+(round 3, fast)       2 del vars, 1 del conss, 1 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 1 upgd conss, 0 impls, 0 clqs, 0 implints
+(round 4, fast)       3 del vars, 1 del conss, 1 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 1 upgd conss, 0 impls, 0 clqs, 0 implints
+(round 5, exhaustive) 3 del vars, 1 del conss, 5 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 1 upgd conss, 0 impls, 0 clqs, 0 implints
+   (0.0s) symmetry computation started: requiring (bin +, int +, cont +), (fixed: bin -, int -, cont -)
+   (0.0s) symmetry computation finished: 2 generators found (max: 1500, log10 of symmetry group size: 0.60) (symcode time: 0.00)
+dynamic symmetry handling statistics:
+   orbitopal reduction:       no components
+   orbital reduction:         no components
+   lexicographic reduction:   no permutations
+handled 2 out of 2 symmetry components
+(round 6, exhaustive) 3 del vars, 1 del conss, 7 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 1 upgd conss, 0 impls, 0 clqs, 0 implints
+presolving (7 rounds: 7 fast, 4 medium, 4 exhaustive):
+ 3 deleted vars, 1 deleted constraints, 7 added constraints, 1 tightened bounds, 0 added holes, 0 changed sides, 0 changed coefficients
+ 0 implications, 0 cliques, 0 implied integral variables (0 bin, 0 int, 0 cont)
+presolved problem has 4 variables (0 bin, 0 int, 4 cont) and 7 constraints
+      2 constraints of type <linear>
+      4 constraints of type <bounddisjunction>
+      1 constraints of type <nonlinear>
+transformed objective value is always integral (scale: 1)
+Presolving Time: 0.00
+
+ time | node  | left  |LP iter|LP it/n|mem/heur|mdpt |vars |cons |rows |cuts |sepa|confs|strbr|  dualbound   | primalbound  |  gap   | compl. 
+t 0.0s|     1 |     0 |     0 |     - | trivial|   0 |   4 |   7 |   0 |   0 |  0 |   0 |   0 | 1.000000e+00 | 1.000000e+00 |   0.00%| unknown
+
+SCIP Status        : problem is solved [optimal solution found]
+Solving Time (sec) : 0.00
+Solving Nodes      : 1
+Primal Bound       : +1.00000000000000e+00 (5 solutions)
+Dual Bound         : +1.00000000000000e+00
+Gap                : 0.00 %
+feasible solution found by trivial heuristic after 0.0 seconds, objective value 0.000000e+00
+presolving:
+(round 1, exhaustive) 0 del vars, 0 del conss, 1 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 0 upgd conss, 0 impls, 0 clqs, 1 implints
+(round 2, fast)       1 del vars, 0 del conss, 1 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 1 upgd conss, 0 impls, 0 clqs, 0 implints
+(round 3, fast)       2 del vars, 1 del conss, 1 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 1 upgd conss, 0 impls, 0 clqs, 0 implints
+(round 4, fast)       3 del vars, 1 del conss, 1 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 1 upgd conss, 0 impls, 0 clqs, 0 implints
+(round 5, exhaustive) 3 del vars, 1 del conss, 5 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 1 upgd conss, 0 impls, 0 clqs, 0 implints
+   (0.0s) symmetry computation started: requiring (bin +, int +, cont +), (fixed: bin -, int -, cont -)
+   (0.0s) symmetry computation finished: 2 generators found (max: 1500, log10 of symmetry group size: 0.60) (symcode time: 0.00)
+dynamic symmetry handling statistics:
+   orbitopal reduction:       no components
+   orbital reduction:         no components
+   lexicographic reduction:   no permutations
+handled 2 out of 2 symmetry components
+(round 6, exhaustive) 3 del vars, 1 del conss, 7 add conss, 1 chg bounds, 0 chg sides, 0 chg coeffs, 1 upgd conss, 0 impls, 0 clqs, 0 implints
+presolving (7 rounds: 7 fast, 4 medium, 4 exhaustive):
+ 3 deleted vars, 1 deleted constraints, 7 added constraints, 1 tightened bounds, 0 added holes, 0 changed sides, 0 changed coefficients
+ 0 implications, 0 cliques, 0 implied integral variables (0 bin, 0 int, 0 cont)
+presolved problem has 4 variables (0 bin, 0 int, 4 cont) and 7 constraints
+      2 constraints of type <linear>
+      4 constraints of type <bounddisjunction>
+      1 constraints of type <nonlinear>
+transformed objective value is always integral (scale: 1)
+Presolving Time: 0.00
+
+ time | node  | left  |LP iter|LP it/n|mem/heur|mdpt |vars |cons |rows |cuts |sepa|confs|strbr|  dualbound   | primalbound  |  gap   | compl. 
+t 0.0s|     1 |     0 |     0 |     - | trivial|   0 |   4 |   7 |   0 |   0 |  0 |   0 |   0 | 1.000000e+00 | 1.000000e+00 |   0.00%| unknown
+
+SCIP Status        : problem is solved [optimal solution found]
+Solving Time (sec) : 0.00
+Solving Nodes      : 1
+Primal Bound       : +1.00000000000000e+00 (5 solutions)
+Dual Bound         : +1.00000000000000e+00
+Gap                : 0.00 %
+We are going to be looking at 6 combinations. After the best possible solution will be pasted.
+Subproblems:   0%|          | 0/6 [00:00<?, ?it/s]Subproblems:   0%|          | 0/6 [00:00<?, ?it/s, best_radius=0.1497]Subproblems:  17%|█▋        | 1/6 [00:00<00:02,  1.77it/s, best_radius=0.1497]Subproblems:  17%|█▋        | 1/6 [00:01<00:02,  1.77it/s, best_radius=0.1517]Subproblems:  33%|███▎      | 2/6 [00:01<00:02,  1.71it/s, best_radius=0.1517]Subproblems:  33%|███▎      | 2/6 [00:01<00:02,  1.71it/s, best_radius=0.1517]Subproblems:  50%|█████     | 3/6 [00:01<00:01,  1.96it/s, best_radius=0.1517]Subproblems:  50%|█████     | 3/6 [00:02<00:01,  1.96it/s, best_radius=0.1517]Subproblems:  67%|██████▋   | 4/6 [00:02<00:00,  2.11it/s, best_radius=0.1517]Subproblems:  67%|██████▋   | 4/6 [00:02<00:00,  2.11it/s, best_radius=0.1517]Subproblems:  83%|████████▎ | 5/6 [00:02<00:00,  2.41it/s, best_radius=0.1517]Subproblems:  83%|████████▎ | 5/6 [00:02<00:00,  2.41it/s, best_radius=0.1517]Subproblems: 100%|██████████| 6/6 [00:02<00:00,  2.37it/s, best_radius=0.1517]Subproblems: 100%|██████████| 6/6 [00:02<00:00,  2.18it/s, best_radius=0.1517]
+============================================================
+Summary
+Facilities: 2, communities: 100, mode: 1, precutting: 1, seperator: 0
+Status: optimal, total time: 2.90 s
+Objective L (squared distance): 0.023025159814309467
+Radius sqrt(L): 0.15174043566007536
+Facility 0: x = 0.8027446046606982, y = 1.0
+Facility 1: x = 0.9960164874838564, y = 0.2572323879244209
+============================================================
