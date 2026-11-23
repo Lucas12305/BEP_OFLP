@@ -1029,15 +1029,21 @@ def box_making(sorted_points : list, first_vert_index1 : int, last_vert_index1 :
     :param last_vert_index1: The index of the last vertex of b1.
     :param last_vert_index2: The index of the last vertex of b2.
     '''
-    if first_vert_index1 >= last_vert_index1:
-        b1 = sorted_points[first_vert_index1:] + sorted_points[:last_vert_index1]
+    if first_vert_index1 is not None:
+        if first_vert_index1 >= last_vert_index1:
+            b1 = sorted_points[first_vert_index1:] + sorted_points[:last_vert_index1]
+        else:
+            b1 = sorted_points[first_vert_index1:last_vert_index1]
+    else: 
+        b1 = []
+    
+    if first_vert_index2 is not None:
+        if first_vert_index2 >= last_vert_index2:
+            b2 = sorted_points[first_vert_index2:] + sorted_points[:last_vert_index2] 
+        else:
+            b2 = sorted_points[first_vert_index2:last_vert_index2]
     else:
-        b1 = sorted_points[first_vert_index1:first_vert_index2]
-
-    if first_vert_index2 >= last_vert_index2:
-        b2 = sorted_points[first_vert_index2:] + sorted_points[:last_vert_index2] 
-    else:
-        b2 = sorted_points[first_vert_index2:last_vert_index2]
+        b2 = []
 
     return b1, b2
 
@@ -1050,10 +1056,41 @@ def get_boundary_index(sorted_points : list, cut_val : float, xy_cut : int) -> f
     :param xy_cut: Indicates whether we cut over x (0) or over y (1).
     '''
     assert len(sorted_points) >= 2, "The list 'sorted points' must contain at least 2 elements."
-    max_iter = len(sorted_points) + 10
+    size = len(sorted_points)
+    highest_value = max(p[xy_cut] for p in sorted_points)
+    lowest_value = min(p[xy_cut] for p in sorted_points)
+    if cut_val > highest_value:
+        return box_making(sorted_points, 0, size - 1, None, None)
+    if cut_val < lowest_value:
+        return box_making(sorted_points, None, None, 0, size - 1)
+
+    if cut_val == highest_value or cut_val == lowest_value: 
+        on_cut = []
+        for k in range(size):
+            if sorted_points[k][xy_cut] == cut_val:
+                on_cut.append(k)
+
+        first_on = 0
+        for k in on_cut:
+            if (k - 1) % size not in on_cut:
+                first_on = k
+                break
+        last_on = (first_on + len(on_cut) - 1) % size
+
+        if len(on_cut) > 1:
+            whole_end = first_on
+        else:
+            whole_end = (first_on - 1) % size
+
+        if cut_val == highest_value:
+            return box_making(sorted_points, last_on, whole_end, first_on, last_on)
+        else:
+            return box_making(sorted_points, first_on, last_on, last_on, whole_end)
+
     n = 0
-    i = max_iter  / 2
-    sets_i = [[-1, math.floor(i - 1/2)], [math.ceil(i), max_iter - 1]]
+    i = size  / 2
+    max_iter = size + 10
+    sets_i = [[-1, math.floor(i)], [math.floor(i), size]]
     found_interval = False
     while (not found_interval) and (n <= max_iter):
         found = False
@@ -1065,25 +1102,24 @@ def get_boundary_index(sorted_points : list, cut_val : float, xy_cut : int) -> f
                     first_i = interval[1]
                     found_interval = True
                 else:
-                    sets_i = [[interval[0], math.floor(i - 1/2)], [math.ceil(i), interval[1]]]
+                    sets_i = [[interval[0], interval[0] + math.floor(i)], [interval[0] + math.floor(i), interval[1]]]
                 found = True
                 break
         if not found:
             split_problem = []
             for interval in sets_i:
                 i = (interval[1] - interval[0]) / 2
-                split_problem.append([interval[0], math.floor(i - 1/2)])
-                split_problem.append([math.ceil(i), interval[1]])
+                split_problem.append([interval[0], math.floor(i)])
+                split_problem.append([math.floor(i), interval[1]])
             sets_i = split_problem  
 
 
 
     found_interval = False
     n = 0
-    max_iter = len(sorted_points)
-    j = max_iter / 2
-    sets_j = [[-1, math.floor(j - 1/2)], [math.ceil(j), max_iter - 1]]
-    while (not found_interval) and (n <= max_iter + 10):
+    j = size / 2
+    sets_j = [[-1, math.floor(j)], [math.floor(j), size]]
+    while (not found_interval) and (n <= max_iter):
         found = False
         n += 1
         for interval in sets_j:
@@ -1093,28 +1129,28 @@ def get_boundary_index(sorted_points : list, cut_val : float, xy_cut : int) -> f
                     first_j = interval[1]
                     found_interval = True
                 else:
-                    sets_j = [[interval[0], math.floor(j - 1/2)], [math.ceil(j), interval[1]]]
+                    sets_j = [[interval[0], interval[0] + math.floor(j)], [interval[0] + math.floor(j), interval[1]]]
                 found = True
                 break
         if not found:
             split_problem = []
             for interval in sets_j:
                 j = (interval[1] - interval[0]) / 2
-                split_problem.append([interval[0], math.floor(j - 1/2)])
-                split_problem.append([math.ceil(j), interval[1]])
+                split_problem.append([interval[0], interval[0] + math.floor(j)])
+                split_problem.append([interval[0] + math.floor(j), interval[1]])
             sets_j = split_problem   
         
-    if first_i[xy_cut] == cut_val:
+    if sorted_points[first_i][xy_cut] == cut_val:
         last_j = first_i
     else:
-        last_j = (first_i - 1) % max_iter
+        last_j = (first_i - 1) % size
     
-    if first_j[xy_cut] == cut_val:
+    if sorted_points[first_j][xy_cut] == cut_val:
         last_i = first_j
     else:
-        last_i = (first_j - 1) % max_iter
+        last_i = (first_j - 1) % size
     
-    return box_making(sorted_points, first_i, last_i, first_j, last_j)
+    return box_making(sorted_points, first_j, last_j, first_i, last_i)
 
 
 
