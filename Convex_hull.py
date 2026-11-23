@@ -1050,13 +1050,12 @@ def get_boundary_index(sorted_points : list, cut_val : float, xy_cut : int) -> f
     :param xy_cut: Indicates whether we cut over x (0) or over y (1).
     '''
     assert len(sorted_points) >= 2, "The list 'sorted points' must contain at least 2 elements."
-    not_found = True
-    max_iter = len(sorted_points)
+    max_iter = len(sorted_points) + 10
     n = 0
     i = max_iter  / 2
     sets_i = [[-1, math.floor(i - 1/2)], [math.ceil(i), max_iter - 1]]
     found_interval = False
-    while (not found_interval) and (n <= (max_iter + 10)):
+    while (not found_interval) and (n <= max_iter):
         found = False
         n += 1
         for interval in sets_i:
@@ -1137,15 +1136,47 @@ def cutting_convex_hull(x_lb : float, x_ub : float, y_lb : float, y_ub : float, 
     if xy_cut == 1:
         assert y_lb <= cut_val <= y_ub, f"Choose a cut value between {y_lb} and {y_ub}"
 
+     # We now create b1 and b2 using highest and lowest
+    # We also make it so that it starts for b1 at the highest and for b2 at the lowest.
+    b1, b2 = get_boundary_index(sorted_points, cut_val, xy_cut)
 
-    lb = [x_lb, y_lb]
-    ub = [x_ub, y_ub]
+    # We use b1 and b2 to get the upper and lower bound for the points
+    if len(b1) == 0:
+        return [], b2
+    if len(b2) == 0:
+        return b1, []
+    
+    v = abs(xy_cut - 1)
+    values = []
+    if b1[0] == b2[-1]:
+        values.append( b1[0][v])
+    else:
+        if b1[0][xy_cut] == b2[-1][xy_cut]:
+            values.append( b1[0][v])
+            values.append(b2[-1][v])
+        else:
+            a = ((b1[0][v] - b2[-1][v]) / (b1[0][xy_cut] - b2[-1][xy_cut]))
+            b = b1[0][v] - b1[0][xy_cut] * a
+            values.append(a * cut_val + b)
+    
+    if b2[0] == b1[-1]:
+        values.append( b2[0][v])
+    else:
+        if b2[0][xy_cut] == b1[-1][xy_cut]:
+            values.append( b2[0][v])
+            values.append(b1[-1][v])
+        else:
+            a = ((b2[0][v] - b1[-1][v]) / (b2[0][xy_cut] - b1[-1][xy_cut]))
+            b = b2[0][v] - b2[0][xy_cut] * a
+            values.append(a * cut_val + b)
+
+    lb, ub = min(values), max(values)
     
     # We then calculate all of the intersection that the cut has with the circles and the upper and lower bounds.
     feas_p = []
-    v = abs(xy_cut - 1)
+    
     for c in circles:
-        x,y,r = c
+        r = c[2]
         if c[xy_cut] - r - 1e-4 <= cut_val <= c[xy_cut] + r + 1e-4:
             a = 1
             b = -2 * c[v]
@@ -1185,9 +1216,8 @@ def cutting_convex_hull(x_lb : float, x_ub : float, y_lb : float, y_ub : float, 
     if feas_bot:
         feas_p.append(p_b)
 
-    # We now create b1 and b2 using highest and lowest
-    # We also make it so that it starts for b1 at the highest and for b2 at the lowest.
-    b1, b2 = get_boundary_index(sorted_points, cut_val, xy_cut)
+   
+    
    
 
     # We also split the not used points in b1 and b2:

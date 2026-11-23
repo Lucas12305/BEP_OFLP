@@ -19,21 +19,27 @@ import Precutting as PC
 
 # ## Creating the model
 
-def points_to_cons(points : list, p_inside : list) -> tuple[list, list]:
+def points_to_cons(points : list, p_inside : list = None) -> tuple[list, list]:
     A = []
     b = []
     n = len(points)
     # We want constriants of the form Ax <= b, where x = [x,y]
+    if n < 3:
+        return A,b
+    if p_inside is None:
+        p_inside = [(points[0][0] + points[math.ceil(n/2)][0]) / 2, (p[0][1] + p[math.ceil(n/2)][1]) / 2 ]
+    
     for i in range(n):
         x1,y1,x2,y2 = points[i][0], points[i][1], points[(i + 1) % n][0], points[(i + 1) % n][1]
-        new_A = np.array([y2 - y1 , x1 - x2])
-        new_b = np.array(x1 * y2 - x2 * y1)
-        if new_A @ p_inside > new_b:
-            A.append(-new_A)
-            b.append(- new_b)
-        else:
-            A.append(new_A)
-            b.append(new_b)
+        a1, a2, b = y2 - y1 , x1 - x2, x1 * y2 - x2 * y1
+        length = math.sqrt(a1 ** 2 + a2 ** 2)
+        if length < 1e-12:
+            continue
+        a1, a2, b = a1/length, a2/length, b/length
+        if a1 * p_inside[0] + a2 * p_inside[1] > b:
+            a1, a2, b = -a1, -a2, -b
+        A.append([a1,a2])
+        b.append(b)
     return A, b
 
 
