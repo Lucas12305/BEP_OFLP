@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from pyscipopt import Model, quicksum
+from pyscipopt import Model, Sepa, SCIP_RESULT
 import networkx as nx
 from tqdm import tqdm
 import math
@@ -50,39 +50,39 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
     
     
     if precutting == 0:
-            start = time.perf_counter()
-            # This means that we only have one box that we have shrunken using the LP method
-            OFP = CLP.create_LP(x_lb, x_ub, y_lb, y_ub, communities, facilities, min_FF_dist, mode)
-            OFP = CLP.update_LP(OFP, circles, x_lb, x_ub, y_lb, y_ub, mode, facilities)
-            if time_limit is not None:
-                OFP.setParam('limits/time', time_limit)
-            else:
-                OFP.setParam('limits/time', (3600))
-            OFP.optimize()
-            OFP.printStatistics()
-            OFP.printBestSol()
-            total_time = time.perf_counter() - start
+        start = time.perf_counter()
+        # This means that we only have one box that we have shrunken using the LP method
+        OFP = CLP.create_LP(x_lb, x_ub, y_lb, y_ub, communities, facilities, min_FF_dist, mode)
+        OFP = CLP.update_LP(OFP, circles, x_lb, x_ub, y_lb, y_ub, mode, facilities)
+        if time_limit is not None:
+            OFP.setParam('limits/time', time_limit)
+        else:
+            OFP.setParam('limits/time', (3600))
+        OFP.optimize()
+        OFP.printStatistics()
+        OFP.printBestSol()
+        total_time = time.perf_counter() - start
+    
         
-            
-            # A short summary at the end, so that the result is easy to find in the text file
-            print("=" * 60)
-            print("Summary")
-            print(f"Facilities: {facilities}, communities: {len(communities)}, mode: {mode}, precutting: {precutting}, seperator: {seperator}")
-            print(f"Status: {OFP.getStatus()}, total time: {total_time:.2f} s")
-            solution = AL.get_solution(OFP, instance)
-            if solution is None:
-                print("No solution was found.")
-            else:
-                facility_points, L = solution
-                print(f"Objective L (squared distance): {L}")
-                print(f"Radius sqrt(L): {np.sqrt(L)}")
-                for i, f in enumerate(facility_points):
-                    print(f"Facility {i}: x = {f[0]}, y = {f[1]}")
-            print("=" * 60, flush=True)
-        
-            if plot == True:
-                PLOT.plot_solution(OFP, instance, plot_file)
-            return None
+        # A short summary at the end, so that the result is easy to find in the text file
+        print("=" * 60)
+        print("Summary")
+        print(f"Facilities: {facilities}, communities: {len(communities)}, mode: {mode}, precutting: {precutting}, seperator: {seperator}")
+        print(f"Status: {OFP.getStatus()}, total time: {total_time:.2f} s")
+        solution = AL.get_solution(OFP, instance)
+        if solution is None:
+            print("No solution was found.")
+        else:
+            facility_points, L = solution
+            print(f"Objective L (squared distance): {L}")
+            print(f"Radius sqrt(L): {np.sqrt(L)}")
+            for i, f in enumerate(facility_points):
+                print(f"Facility {i}: x = {f[0]}, y = {f[1]}")
+        print("=" * 60, flush=True)
+    
+        if plot == True:
+            PLOT.plot_solution(OFP, instance, plot_file)
+        return None
 
 
 
@@ -92,7 +92,7 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
         if mode == 0:
             start = time.perf_counter()
             # We divide into the different sets
-            points, planes = IO.feas_region_box_LP_cutting(x_lb,x_ub,y_lb,y_ub,circles)
+            points, _ = IO.feas_region_box_LP_cutting(x_lb,x_ub,y_lb,y_ub,circles)
             poss_places = len(points)
             subproblems_combinations = PC.combinations(facilities, poss_places, points, min_FF_dist, x_lb, x_ub, y_lb, y_ub)
             best_found_sol = Init_sol[0] ** 2
@@ -130,7 +130,10 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
                 for m in range(poss_places):
                     if comb[m] != 0:
                         comb[m] -= 1
-                        CLP.add_conv_hull_cons_precut_GS(OFP[i], var[0], var[1], sorted_points[m])
+                        if mode == 0:
+                            CLP.add_conv_hull_cons_precut_LP(OFP[i], var[0], var[1], sorted_points[m])
+                        else:
+                            CLP.add_conv_hull_cons_precut_GS(OFP[i], var[0], var[1], sorted_points[m])
                         break
 
             CLP.create_objective(OFP[i], ObnFacilities_x,ObnFacilities_y, circles, best_found_sol)
@@ -218,7 +221,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-
 
 

@@ -114,8 +114,10 @@ def update_LP(OFP, circles, x_lb, x_ub, y_lb, y_ub, mode, facilities) -> None:
     '''
     This function adds the communities constraints to the model.
     '''
-    for var in range(facilities):
-        feas_region_constraint(x_lb, x_ub, y_lb, y_ub, circles, mode, OFP, [OFP.getVars()[2 * var], OFP.getVars()[2 * var + 1]])
+    # The variables are stored as x_0..x_(n-1), y_0..y_(n-1), L, so facility i has x at index i and y at index n + i
+    all_vars = OFP.getVars()
+    for i in range(facilities):
+        feas_region_constraint(x_lb, x_ub, y_lb, y_ub, circles, mode, OFP, [all_vars[i], all_vars[facilities + i]])
     return OFP
 
 
