@@ -377,34 +377,20 @@ def create_conv_region_GS(points : list) -> list:
     return sorted_points, del_points
 
 
-def angle_points_custom(p1, p2, direction):
+def angle_points_custom(p1, p2, ref_angle):
     '''
     This function calculates the angle between 2 points and then turns it so that the right starting point gets used.
     :param p1: The first point considered, i.e. the reference point.
     :param p2: The second point considered, i.e. the other point.
     '''
-    
-    dx = p2[0] - p1[0]
-    dy = p2[1] - p1[1]
-
-    angle = math.atan2(dy, dx)
-
-    reference_angles = [
-        math.pi,            # 0: Up
-        math.pi/2,          # 1: Left
-        0,                  # 2: Down
-        3*math.pi / 2       # 3: right
-    ]
-
-    if direction not in range(4):
-        raise ValueError("Direction must be 0, 1, 2 or 3")
-    distance = float(np.sqrt(dy ** 2 + dx ** 2))
-    return (angle - reference_angles[direction]) % (2 * math.pi), distance
+    angle = (math.atan2(p2[1] - p1[1], p2[0] - p1[0] - ref_angle) % (2 * math.pi))
+    dist = math.sqrt((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2)
+    return angle, dist
 
 
 
 
-def create_conv_region_GS_know_points(known_cycle : list, points : list, rotation : int) -> list:
+def create_conv_region_GS_know_points(known_cycle : list, points : list) -> list:
     '''
     An implementation of the Graham scan algorithm to create the convex hull of a set of points when we already know the order of a set of points.
     :param known_cycle: This is a list of the points we already know are in the right order in (x,y).
@@ -413,32 +399,47 @@ def create_conv_region_GS_know_points(known_cycle : list, points : list, rotatio
     '''
     # We first find the point with the lowest y-value and set it as the start of the sorted points.
     # When two points have the same y-value the one with the lowest x-value gets taken
-    points_GS = []
     if len(points) == 0:
         return known_cycle, []
+
+    if len(known_cycle) < 3:
+        all_points = []
+        for p in list(known_cycle) + list(points):
+            q = [p[0], p[1]]
+            if q not in all_points:
+                all_points.append(q)
+        cycle, del_points = create_conv_region_GS(all_points)
+        return [[p[0], p[1]] for p in cycle], [[p[0], p[1]] for p in del_points]
+
     
     start_vertex = known_cycle[0]
     end_vertex = known_cycle[-1]
-
     # Angle of the reference line
+    ref_angle = math.atan2(known_cycle[1][1] - start_vertex[1], known_cycle[1][0] - start_vertex[0])
 
+    points_GS = []
+    del_points = []
 
     for p in points:
-        angle, dist = angle_points_custom(start_vertex, p, rotation)
-        points_GS.append([p, angle, dist])
+        area = (start_vertex[0] - end_vertex[0]) * (p[1] - end_vertex[1]) - (start_vertex[1] - end_vertex[1]) * (p[0] - end_vertex[0])
+        if area < 0: # The point is not inside the hull, created by the sorted points from before
+            angle, dist = angle_points_custom(start_vertex, p, ref_angle)
+            points_GS.append([p, angle, dist])
+        else:
+            del_points.append(p)
+
 
     # Sort by adjusted angle
     points_GS.sort(key=lambda p: (p[1], p[2]))
-    points_GS1 = points_GS
     
     sorted_points = known_cycle.copy()
-    del_points = []
+    
     
     # Protect all known vertices
     min_length = len(known_cycle)
 
-    for p, angle, dist in points_GS1:
-        while len(sorted_points) >= min_length:
+    for p, angle, dist in points_GS:
+        while len(sorted_points) > min_length:
             a = sorted_points[-2]
             b = sorted_points[-1]
                     
@@ -449,17 +450,13 @@ def create_conv_region_GS_know_points(known_cycle : list, points : list, rotatio
     
         sorted_points.append(p)
 
+
     # Remove duplicated closing vertex
     for i in range(len(sorted_points) - 1):
         if sorted_points[i + 1] == sorted_points[0]:
             return sorted_points[:i+1], del_points
     
     return sorted_points, del_points
-
-
-# ## Visualization
-# The following definitions are used for visualization of what is going on inside the definitions.
-
 
 
 # ## Creating a convex hull
@@ -1031,17 +1028,17 @@ def box_making(sorted_points : list, first_vert_index1 : int, last_vert_index1 :
     '''
     if first_vert_index1 is not None:
         if first_vert_index1 >= last_vert_index1:
-            b1 = sorted_points[first_vert_index1:] + sorted_points[:last_vert_index1]
+            b1 = sorted_points[first_vert_index1:] + sorted_points[:last_vert_index1 + 1]
         else:
-            b1 = sorted_points[first_vert_index1:last_vert_index1]
+            b1 = sorted_points[first_vert_index1:last_vert_index1 + 1]
     else: 
         b1 = []
     
     if first_vert_index2 is not None:
         if first_vert_index2 >= last_vert_index2:
-            b2 = sorted_points[first_vert_index2:] + sorted_points[:last_vert_index2] 
+            b2 = sorted_points[first_vert_index2:] + sorted_points[:last_vert_index2 + 1] 
         else:
-            b2 = sorted_points[first_vert_index2:last_vert_index2]
+            b2 = sorted_points[first_vert_index2:last_vert_index2 + 1]
     else:
         b2 = []
 
@@ -1090,7 +1087,7 @@ def get_boundary_index(sorted_points : list, cut_val : float, xy_cut : int) -> f
     n = 0
     i = size  / 2
     max_iter = size + 10
-    sets_i = [[-1, math.floor(i)], [math.floor(i), size]]
+    sets_i = [[-1, math.floor(i)], [math.floor(i), size - 1]]
     found_interval = False
     while (not found_interval) and (n <= max_iter):
         found = False
@@ -1109,8 +1106,8 @@ def get_boundary_index(sorted_points : list, cut_val : float, xy_cut : int) -> f
             split_problem = []
             for interval in sets_i:
                 i = (interval[1] - interval[0]) / 2
-                split_problem.append([interval[0], math.floor(i)])
-                split_problem.append([math.floor(i), interval[1]])
+                split_problem.append([interval[0], interval[0] + math.floor(i)])
+                split_problem.append([interval[0] + math.floor(i), interval[1]])
             sets_i = split_problem  
 
 
@@ -1118,7 +1115,7 @@ def get_boundary_index(sorted_points : list, cut_val : float, xy_cut : int) -> f
     found_interval = False
     n = 0
     j = size / 2
-    sets_j = [[-1, math.floor(j)], [math.floor(j), size]]
+    sets_j = [[-1, math.floor(j)], [math.floor(j), size - 1]]
     while (not found_interval) and (n <= max_iter):
         found = False
         n += 1
@@ -1219,7 +1216,7 @@ def cutting_convex_hull(x_lb : float, x_ub : float, y_lb : float, y_ub : float, 
             c = c[xy_cut] ** 2 - 2 * c[xy_cut] * cut_val + cut_val ** 2 + c[v] ** 2 - r ** 2
             s = solve_abc_form(a,b,c) 
             for si in s:
-                if lb[v] <= si <= ub[v]:
+                if lb <= si <= ub:
                     if xy_cut == 0:
                         pi = [cut_val, si]
                     else:
