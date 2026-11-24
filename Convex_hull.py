@@ -1268,18 +1268,8 @@ def cutting_convex_hull(x_lb : float, x_ub : float, y_lb : float, y_ub : float, 
             oP2.append(p)
     
 
-    #We have 2 types of rotation, one for the x cut and one for a y cut
-    if xy_cut == 0:
-        rotation = [0,2]
-    else:
-        rotation = [3,1]
-
-    if in_out:
-            print(f"The input for box 1 is: {b1, oP1, rotation[0]}")
-            print(f"The input for box 2 is: {b2, oP2, rotation[1]}")
-
-    b1_cycle, b1_not_used = create_conv_region_GS_know_points(b1, oP1, rotation[0]) 
-    b2_cycle, b2_not_used = create_conv_region_GS_know_points(b2, oP2, rotation[1]) 
+    b1_cycle, b1_not_used = create_conv_region_GS_know_points(b1, oP1) 
+    b2_cycle, b2_not_used = create_conv_region_GS_know_points(b2, oP2) 
 
     b1 = b1_cycle
     b2 = b2_cycle
