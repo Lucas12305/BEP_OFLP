@@ -10,9 +10,9 @@ def facet_key(a : float,b : float,c : float, rounding : int=9):
 
 
 class HullSeperator(Sepa):
-    def __init__(self, var_x, var_y, circles, root_hulls, sep_mode=1, update=0, hull_deriving_mode=0, hull_of_facility=None):
-        self.var_x, self.var_y, self.circles = var_x, var_y, circles, A, b
-        self.sep_mode, self.update, self.hull_deriving_mode = sep_mode, update, hull_deriving_mode
+    def __init__(self, var_x, var_y, circles, root_hulls, sep_mode=1, hull_deriving_mode=0, hull_of_facility=None):
+        self.var_x, self.var_y, self.circles = var_x, var_y, circles
+        self.sep_mode, self.hull_deriving_mode = sep_mode, hull_deriving_mode
         self.root_hulls = root_hulls
         if hull_of_facility is None:
             hull_of_facility = [0] * len(var_x)
@@ -24,9 +24,8 @@ class HullSeperator(Sepa):
             A, b = CLP.points_to_cons(points)
             self.root_facets.append({facet_key(A[i][0], A[i][1], b[i]) for i in range(len(b))})
 
-        # The hulls that we stored per box and the box that belongs to each of them
-        self.hulls = {}
-        self.hull_boxes = {}
+        # The hull of every facility in every node that we have seen, with as key (node number, facility)
+        self.node_hulls = {}
         self.var_index = None
         # The constraints that are already added, so that we do not add them again in the next round of the same node
         self.done = set()
@@ -66,7 +65,7 @@ class HullSeperator(Sepa):
         return [b1, not_used1]
 
 
-    def get_cutval(self, node) -> list:
+    def get_cutval(self, node) -> tuple:
         branchings = node.getParentBranchings()
         if branchings is None:
             return None
@@ -85,37 +84,40 @@ class HullSeperator(Sepa):
         return facility, xy_cut, cut_val, bound_type
    
         
-    def get_hull(self, x_lb : float, x_ub : float, y_lb : float, y_ub : float, hull_deriving_mode : int, update : int, h : int):
+    def get_hull(self, node, j : int, bounds : tuple, hull_deriving_mode : int, h : int) -> list:
         '''
-        :param hull_deriving_mode: 0 is that we don't update hull, 1 is making hull from scratch, 2 is updating from earlier
+        Gives the hull of facility j in this node as [points, not_used_points].
+        :param node: The node that we are in.
+        :param j: The facility.
+        :param bounds: (x_lb, x_ub, y_lb, y_ub) of the facility in this node.
+        :param hull_deriving_mode: 0 is that we don't update hull, 1 is cutting the root hull at all of the bounds, 2 is cutting the hull of the parent node at the last cut.
+        :param h: The index of the root hull of the facility.
         '''
-        bounds = (x_lb, x_ub, y_lb, y_ub)
         root = self.root_hulls[h]
         if hull_deriving_mode == 0:
             return root
 
-        if hull_deriving_mode == 1:
-            hull = self.cut_hull(root, bounds)
-        
-        else: # Mode == 2
-            key = (h,) + box_key(x_lb, x_ub, y_lb, y_ub)
-            if key in self.hulls:
-                self.n_stored_hits += 1
-                return self.hulls[key]
-            # A hull that we stored for bounds that contain these bounds, contains all of the feasible points of these bounds.
-            # We take the one with the fewest points, because that is the one that is cut the most.
-            start_hull = root
-            for old_key, old_bounds in self.hull_boxes.items():
-                if old_key[0] != h:
-                    continue
-                if old_bounds[0] <= x_lb + 1e-9 and old_bounds[1] >= x_ub - 1e-9 and old_bounds[2] <= y_lb + 1e-9 and old_bounds[3] >= y_ub - 1e-9:
-                    cand = self.hulls[old_key]
-                    if len(cand[0]) + len(cand[1]) < len(start_hull[0]) + len(start_hull[1]):
-                        start_hull = cand
-            hull = self.cut_hull(start_hull, bounds)
-            self.hulls[key] = hull
-            self.hull_boxes[key] = bounds
+        if (node.getNumber(), j) in self.node_hulls:
+            return self.node_hulls[(node.getNumber(), j)]
 
+        hull = None
+        if hull_deriving_mode == 2 and node.getParent() is not None:
+            parent_hull = self.node_hulls.get((node.getParent().getNumber(), j))
+            if parent_hull is not None:
+                hull = parent_hull
+                cut = self.get_cutval(node)
+                # Only a cut over this facility changes its hull
+                if cut is not None and cut[0] == j:
+                    hull = self.cut_hull(parent_hull, cut[1], cut[2], cut[3])
+
+        if hull is None:
+            # We start from the root hull and cut at every bound, a bound that does not lie inside of the hull does nothing
+            hull = root
+            for xy in range(2):
+                hull = self.cut_hull(hull, xy, bounds[2 * xy], 0)
+                hull = self.cut_hull(hull, xy, bounds[2 * xy + 1], 1)
+
+        self.node_hulls[(node.getNumber(), j)] = hull
         return hull
 
     def add_row(self, x, y, a1 : float, a2 : float, c : float, name : str, local : bool, force : bool) -> bool:
@@ -143,7 +145,7 @@ class HullSeperator(Sepa):
             
             h = self.hull_of_facility[j] # starting hull of facility
             box = (x.getLbLocal(), x.getUbLocal(), y.getLbLocal(), y.getUbLocal())
-            points, not_used = self.get_hull(box[0], box[1], box[2], box[3], self.hull_deriving_mode, self.update, h)
+            points, not_used = self.get_hull(node, j, box, self.hull_deriving_mode, h)
             A, b = CLP.points_to_cons(points)
 
         
@@ -186,5 +188,5 @@ class HullSeperator(Sepa):
                     
         if found:
             return {"result": SCIP_RESULT.SEPARATED}
-        return {"result": SCIP_RESULT.DIDNOTFIND}             
+        return {"result": SCIP_RESULT.DIDNOTFIND}         
 

@@ -31,15 +31,15 @@ def points_to_cons(points : list, p_inside : list = None) -> tuple[list, list]:
     
     for i in range(n):
         x1,y1,x2,y2 = points[i][0], points[i][1], points[(i + 1) % n][0], points[(i + 1) % n][1]
-        a1, a2, b = y2 - y1 , x1 - x2, x1 * y2 - x2 * y1
+        a1, a2, b1 = y2 - y1 , x1 - x2, x1 * y2 - x2 * y1
         length = math.sqrt(a1 ** 2 + a2 ** 2)
         if length < 1e-12:
             continue
-        a1, a2, b = a1/length, a2/length, b/length
-        if a1 * p_inside[0] + a2 * p_inside[1] > b:
-            a1, a2, b = -a1, -a2, -b
+        a1, a2, b1 = a1/length, a2/length, b/length
+        if a1 * p_inside[0] + a2 * p_inside[1] > b1:
+            a1, a2, b1 = -a1, -a2, -b1
         A.append([a1,a2])
-        b.append(b)
+        b.append(b1)
     return A, b
 
 

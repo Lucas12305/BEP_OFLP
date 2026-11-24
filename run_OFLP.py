@@ -131,7 +131,7 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
                     if comb[m] != 0:
                         comb[m] -= 1
                         if mode == 0:
-                            CLP.add_conv_hull_cons_precut_LP(OFP[i], var[0], var[1], sorted_points[m])
+                            CLP.add_conv_hull_cons_precut_LP(OFP[i], var[0], var[1], points[m])
                         else:
                             CLP.add_conv_hull_cons_precut_GS(OFP[i], var[0], var[1], sorted_points[m])
                         break
@@ -170,26 +170,26 @@ def run(instance : dict, mode: int, plot : bool = False, plot_file : str = None,
             OFP_optimal[j].printStatistics()
             OFP_optimal[j].printBestSol()
 
-        total_time = time.perf_counter() - start    
-        # A short summary at the end, so that the result is easy to find in the text file
-        print("=" * 60)
-        print("Summary")
-        print(f"Facilities: {facilities}, communities: {len(communities)}, mode: {mode}, precutting: {precutting}, seperator: {seperator}")
-        print(f"Status: {OFP[j].getStatus()}, total time: {total_time:.2f} s")
-        solution = AL.get_solution(OFP[j], instance)
-        if solution is None:
-            print("No solution was found.")
-        else:
-            facility_points, L = solution
-            print(f"Objective L (squared distance): {L}")
-            print(f"Radius sqrt(L): {np.sqrt(L)}")
-            for i, f in enumerate(facility_points):
-                print(f"Facility {i}: x = {f[0]}, y = {f[1]}")
-        print("=" * 60, flush=True)
-        
-        if plot == True:
-            PLOT.plot_solution(OFP[j], instance, plot_file)
-        return None     
+            total_time = time.perf_counter() - start    
+            # A short summary at the end, so that the result is easy to find in the text file
+            print("=" * 60)
+            print("Summary")
+            print(f"Facilities: {facilities}, communities: {len(communities)}, mode: {mode}, precutting: {precutting}, seperator: {seperator}")
+            print(f"Status: {OFP_optimal[j].getStatus()}, total time: {total_time:.2f} s")
+            solution = AL.get_solution(OFP_optimal[j], instance)
+            if solution is None:
+                print("No solution was found.")
+            else:
+                facility_points, L = solution
+                print(f"Objective L (squared distance): {L}")
+                print(f"Radius sqrt(L): {np.sqrt(L)}")
+                for i, f in enumerate(facility_points):
+                    print(f"Facility {i}: x = {f[0]}, y = {f[1]}")
+            print("=" * 60, flush=True)
+            
+            if plot == True:
+                PLOT.plot_solution(OFP_optimal[j], instance, plot_file)
+            return None     
             
 
 
