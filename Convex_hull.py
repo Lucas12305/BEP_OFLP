@@ -1035,7 +1035,7 @@ def box_making(sorted_points : list, first_vert_index1 : int, last_vert_index1 :
         b1 = []
     
     if first_vert_index2 is not None:
-        if first_vert_index2 >= last_vert_index2:
+        if first_vert_index2 > last_vert_index2:
             b2 = sorted_points[first_vert_index2:] + sorted_points[:last_vert_index2 + 1] 
         else:
             b2 = sorted_points[first_vert_index2:last_vert_index2 + 1]
