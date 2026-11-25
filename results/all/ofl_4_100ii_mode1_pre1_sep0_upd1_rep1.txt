@@ -1,0 +1,15 @@
+Instance: ofl_4_100ii.gms
+We have derived 5 subsets of hulls.
+We are going to be looking at 5 combinations. After the best possible solution will be pasted.
+Subproblems:   0%|          | 0/5 [00:00<?, ?it/s]Subproblems:   0%|          | 0/5 [00:00<?, ?it/s, best_radius=0.1158]Subproblems:   0%|          | 0/5 [00:00<?, ?it/s, best_radius=0.1158]Subproblems:   0%|          | 0/5 [00:00<?, ?it/s, best_radius=0.1158]Subproblems:   0%|          | 0/5 [00:01<?, ?it/s, best_radius=0.1246]Subproblems:  80%|████████  | 4/5 [00:01<00:00,  3.13it/s, best_radius=0.1246]Subproblems:  80%|████████  | 4/5 [00:01<00:00,  3.13it/s, best_radius=0.1246]Subproblems: 100%|██████████| 5/5 [00:01<00:00,  3.86it/s, best_radius=0.1246]
+============================================================
+Summary
+Facilities: 4, communities: 100, mode: 1, precutting: 1, seperator: 0, update: 1
+Status: optimal, total time: 1.39 s
+Objective L (squared distance): 0.015522839460330036
+Radius sqrt(L): 0.12459068769506827
+Facility 0: x = 0.006831280779805313, y = 0.37172168717113957
+Facility 1: x = 0.9959383263592769, y = 0.2462153482108026
+Facility 2: x = 0.8319872455397813, y = 1.0000000098486792
+Facility 3: x = 0.3950571045790208, y = 0.7569114620927676
+============================================================

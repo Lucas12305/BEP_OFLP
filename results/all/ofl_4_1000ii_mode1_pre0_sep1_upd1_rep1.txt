@@ -1,0 +1,122 @@
+Instance: ofl_4_1000ii.gms
+presolving:
+(round 1, fast)       0 del vars, 0 del conss, 0 add conss, 6 chg bounds, 0 chg sides, 0 chg coeffs, 0 upgd conss, 0 impls, 0 clqs, 0 implints
+   (0.2s) symmetry computation started: requiring (bin +, int +, cont +), (fixed: bin -, int -, cont -)
+   (0.2s) symmetry computation finished: 3 generators found (max: 1500, log10 of symmetry group size: 1.38) (symcode time: 0.01)
+dynamic symmetry handling statistics:
+   orbitopal reduction:        1 components: 2x4
+   orbital reduction:         no components
+   lexicographic reduction:   no permutations
+handled 1 out of 1 symmetry components
+presolving (2 rounds: 2 fast, 1 medium, 1 exhaustive):
+ 0 deleted vars, 0 deleted constraints, 0 added constraints, 6 tightened bounds, 0 added holes, 0 changed sides, 0 changed coefficients
+ 0 implications, 0 cliques, 0 implied integral variables (0 bin, 0 int, 0 cont)
+presolved problem has 9 variables (0 bin, 0 int, 9 cont) and 4006 constraints
+   4006 constraints of type <nonlinear>
+Presolving Time: 0.17
+
+ time | node  | left  |LP iter|LP it/n|mem/heur|mdpt |vars |cons |rows |cuts |sepa|confs|strbr|  dualbound   | primalbound  |  gap   | compl. 
+  0.3s|     1 |     0 |  2396 |     - |    53M |   0 |4035 |4006 |4014 |   0 |  0 |   0 |   0 | 5.005386e-01 |      --      |    Inf | unknown
+L 0.7s|     1 |     0 |  2396 |     - |undercov|   0 |4035 |4006 |4014 |   0 |  0 |   0 |   0 | 5.005386e-01 | 2.648335e-05 |  Large | unknown
+L 1.1s|     1 |     0 |  2396 |     - |undercov|   0 |4035 |4006 |4014 |   0 |  0 |   0 |   0 | 5.005386e-01 | 1.126761e-04 |  Large | unknown
+  1.3s|     1 |     0 |  2396 |     - |    69M |   0 |4035 |4006 |4014 |   0 |  0 |   0 |   0 | 5.005386e-01 | 1.126761e-04 |  Large | unknown
+  1.3s|     1 |     0 |  2396 |     - |    69M |   0 |4035 |4006 |4014 |   0 |  0 |   0 |   0 | 5.005386e-01 | 1.126761e-04 |  Large | unknown
+  1.6s|     1 |     0 |  6282 |     - |    69M |   0 |4035 |4006 |4014 |   0 |  1 |   0 |   0 | 5.005386e-01 | 1.126761e-04 |  Large | unknown
+L15.3s|     1 |     0 |  6282 |     - |multista|   0 |4035 |4006 |4014 |   0 |  2 |   0 |   0 | 5.005386e-01 | 6.151207e-04 |  Large | unknown
+ 15.9s|     1 |     0 |  6282 |     - |    76M |   0 |4035 |4006 |4014 |   0 |  2 |   0 |   0 | 5.005386e-01 | 6.151207e-04 |  Large | unknown
+ 15.9s|     1 |     2 |  6282 |     - |    76M |   0 |4035 |4006 |4014 |   0 |  3 |   0 |   0 | 5.005386e-01 | 6.151207e-04 |  Large | unknown
+ 21.5s|   100 |    99 |  8542 |  62.1 |    87M |   7 |4035 |4006 | 140 |8418 |  5 |   0 |   0 | 1.183756e-01 | 6.151207e-04 |  Large |   0.83%
+ 24.4s|   200 |   165 | 10525 |  40.8 |   104M |   9 |4035 |4006 | 155 |  11k|  2 |   1 |   0 | 6.943279e-02 | 6.151207e-04 |  Large |   6.73%
+ 26.5s|   300 |   191 | 12016 |  32.2 |   117M |  11 |4035 |4006 | 114 |  12k|  2 |   2 |   0 | 5.474952e-02 | 6.151207e-04 |8800.61%|  15.91%
+ 28.1s|   400 |   249 | 13687 |  28.3 |   131M |  13 |4035 |4006 | 146 |  14k|  3 |   2 |   0 | 4.060253e-02 | 6.151207e-04 |6500.74%|  18.56%
+ 30.0s|   500 |   319 | 15226 |  25.7 |   146M |  13 |4035 |4006 | 158 |  15k|  4 |   2 |   0 | 3.414044e-02 | 6.151207e-04 |5450.20%|  19.86%
+ 32.1s|   600 |   385 | 16698 |  23.9 |   159M |  13 |4035 |4006 | 138 |  16k|  3 |   3 |   0 | 3.272714e-02 | 6.151207e-04 |5220.44%|  21.44%
+ time | node  | left  |LP iter|LP it/n|mem/heur|mdpt |vars |cons |rows |cuts |sepa|confs|strbr|  dualbound   | primalbound  |  gap   | compl. 
+ 34.0s|   700 |   443 | 18080 |  22.4 |   173M |  14 |4035 |4006 | 143 |  17k|  4 |   4 |   0 | 3.083478e-02 | 6.151207e-04 |4912.80%|  23.35%
+ 35.5s|   800 |   505 | 19339 |  21.2 |   187M |  14 |4035 |4006 | 134 |  18k|  6 |   5 |   0 | 2.695230e-02 | 6.151207e-04 |4281.63%|  24.72%
+ 37.2s|   900 |   591 | 20536 |  20.2 |   203M |  14 |4035 |4006 | 200 |  19k|  4 |   5 |   0 | 2.547597e-02 | 6.151207e-04 |4041.62%|  25.06%
+ 38.9s|  1000 |   669 | 22037 |  19.7 |   220M |  14 |4035 |4006 | 111 |  20k|  3 |   6 |   0 | 2.020855e-02 | 6.151207e-04 |3185.30%|  25.93%
+ 40.6s|  1100 |   733 | 23397 |  19.1 |   235M |  16 |4035 |4006 | 125 |  21k|  2 |   8 |   0 | 1.982656e-02 | 6.151207e-04 |3123.20%|  26.61%
+ 42.6s|  1200 |   815 | 24677 |  18.6 |   256M |  16 |4035 |4006 | 145 |  21k|  3 |   8 |   0 | 1.957354e-02 | 6.151207e-04 |3082.06%|  27.15%
+ 44.9s|  1300 |   871 | 25987 |  18.2 |   271M |  16 |4035 |4006 | 148 |  22k|  4 |  12 |   0 | 1.809291e-02 | 6.151207e-04 |2841.36%|  28.05%
+ 46.9s|  1400 |   923 | 27002 |  17.6 |   284M |  16 |4035 |4006 | 160 |  22k|  2 |  13 |   0 | 1.740500e-02 | 6.151207e-04 |2729.53%|  28.69%
+ 49.0s|  1500 |   977 | 28218 |  17.2 |   296M |  16 |4035 |4006 | 136 |  23k|  2 |  13 |   0 | 1.575730e-02 | 6.151207e-04 |2461.66%|  29.88%
+ 53.2s|  1600 |  1035 | 29367 |  16.9 |   309M |  17 |4035 |4006 | 131 |  24k|  3 |  13 |   0 | 1.459742e-02 | 6.151207e-04 |2273.10%|  30.14%
+ 56.2s|  1700 |  1079 | 30658 |  16.6 |   323M |  17 |4035 |4006 | 146 |  24k|  3 |  14 |   0 | 1.395253e-02 | 6.151207e-04 |2168.26%|  30.78%
+ 60.0s|  1800 |  1135 | 31985 |  16.4 |   342M |  17 |4035 |4006 | 165 |  25k|  3 |  14 |   0 | 1.271798e-02 | 6.151207e-04 |1967.56%|  31.09%
+ 62.2s|  1900 |  1201 | 33034 |  16.1 |   356M |  17 |4035 |4006 | 152 |  25k|  3 |  15 |   0 | 1.214869e-02 | 6.151207e-04 |1875.01%|  32.01%
+ 65.6s|  2000 |  1259 | 34029 |  15.8 |   371M |  17 |4035 |4006 | 142 |  26k|  2 |  15 |   0 | 1.158561e-02 | 6.151207e-04 |1783.47%|  32.12%
+ 70.5s|  2100 |  1295 | 35171 |  15.6 |   382M |  17 |4035 |4006 | 166 |  26k|  2 |  17 |   0 | 1.158561e-02 | 6.151207e-04 |1783.47%|  32.41%
+ time | node  | left  |LP iter|LP it/n|mem/heur|mdpt |vars |cons |rows |cuts |sepa|confs|strbr|  dualbound   | primalbound  |  gap   | compl. 
+ 75.5s|  2200 |  1333 | 36378 |  15.5 |   395M |  17 |4035 |4006 | 167 |  27k|  3 |  18 |   0 | 1.020850e-02 | 6.151207e-04 |1559.59%|  32.77%
+ 81.8s|  2300 |  1385 | 37373 |  15.2 |   406M |  17 |4035 |4006 | 171 |  28k|  3 |  20 |   0 | 9.669405e-03 | 6.151207e-04 |1471.95%|  32.95%
+ 86.3s|  2400 |  1463 | 38417 |  15.0 |   419M |  17 |4035 |4006 | 162 |  28k|  2 |  20 |   0 | 9.210941e-03 | 6.151207e-04 |1397.42%|  33.06%
+d88.3s|  2467 |  1518 | 39157 |  14.9 |adaptive|  17 |4035 |4006 | 160 |  28k|  4 |  20 |   0 | 9.200527e-03 | 7.916113e-04 |1062.25%|  33.11%
+ 90.2s|  2500 |  1539 | 39580 |  14.9 |   434M |  17 |4035 |4006 | 159 |  29k|  2 |  21 |   0 | 9.200527e-03 | 7.916113e-04 |1062.25%|  33.29%
+ 93.5s|  2600 |  1603 | 40850 |  14.8 |   449M |  17 |4035 |4006 | 155 |  29k|  5 |  21 |   0 | 9.055857e-03 | 7.916113e-04 |1043.98%|  33.62%
+ 98.9s|  2700 |  1637 | 42028 |  14.7 |   468M |  17 |4035 |4006 | 148 |  30k|  3 |  21 |   0 | 8.983558e-03 | 7.916113e-04 |1034.84%|  34.11%
+  103s|  2800 |  1711 | 43011 |  14.5 |   480M |  18 |4035 |4006 | 157 |  30k|  2 |  24 |   0 | 8.720787e-03 | 7.916113e-04 |1001.65%|  34.26%
+  108s|  2900 |  1767 | 44124 |  14.4 |   495M |  18 |4035 |4006 | 138 |  31k|  2 |  24 |   0 | 8.395997e-03 | 7.916113e-04 | 960.62%|  34.89%
+  112s|  3000 |  1829 | 45298 |  14.3 |   507M |  18 |4035 |4006 | 145 |  31k|  2 |  24 |   0 | 8.191543e-03 | 7.916113e-04 | 934.79%|  35.48%
+  116s|  3100 |  1883 | 46382 |  14.2 |   519M |  18 |4035 |4006 |   0 |  32k|  0 |  24 |   0 | 8.095618e-03 | 7.916113e-04 | 922.68%|  35.87%
+  120s|  3200 |  1951 | 47375 |  14.1 |   531M |  18 |4035 |4006 | 156 |  32k|  2 |  24 |   0 | 8.001097e-03 | 7.916113e-04 | 910.74%|  36.33%
+  127s|  3300 |  1995 | 48442 |  14.0 |   542M |  18 |4035 |4006 | 148 |  33k|  2 |  25 |   0 | 7.672393e-03 | 7.916113e-04 | 869.21%|  36.61%
+  132s|  3400 |  2041 | 49530 |  13.9 |   552M |  18 |4035 |4006 | 167 |  33k|  2 |  28 |   0 | 7.495224e-03 | 7.916113e-04 | 846.83%|  37.40%
+  137s|  3500 |  2103 | 50643 |  13.8 |   567M |  18 |4035 |4006 | 149 |  34k|  3 |  29 |   0 | 7.414124e-03 | 7.916113e-04 | 836.59%|  37.75%
+ time | node  | left  |LP iter|LP it/n|mem/heur|mdpt |vars |cons |rows |cuts |sepa|confs|strbr|  dualbound   | primalbound  |  gap   | compl. 
+  142s|  3600 |  2157 | 51849 |  13.7 |   580M |  18 |4035 |4006 | 172 |  34k|  4 |  29 |   0 | 7.188720e-03 | 7.916113e-04 | 808.11%|  38.23%
+  146s|  3700 |  2225 | 52848 |  13.6 |   594M |  19 |4035 |4006 | 147 |  35k|  3 |  30 |   0 | 6.996414e-03 | 7.916113e-04 | 783.82%|  38.72%
+  153s|  3800 |  2265 | 54150 |  13.6 |   605M |  19 |4035 |4006 | 171 |  35k|  3 |  31 |   0 | 6.587562e-03 | 7.916113e-04 | 732.17%|  39.28%
+  158s|  3900 |  2307 | 55182 |  13.5 |   617M |  19 |4035 |4006 | 148 |  36k|  4 |  31 |   0 | 6.335447e-03 | 7.916113e-04 | 700.32%|  39.78%
+  162s|  4000 |  2353 | 56206 |  13.5 |   631M |  19 |4035 |4006 | 163 |  36k|  3 |  32 |   0 | 6.174082e-03 | 7.916113e-04 | 679.94%|  40.15%
+  169s|  4100 |  2381 | 57467 |  13.4 |   641M |  19 |4035 |4006 | 170 |  37k|  2 |  32 |   0 | 6.050340e-03 | 7.916113e-04 | 664.31%|  41.00%
+  174s|  4200 |  2425 | 58500 |  13.4 |   653M |  19 |4035 |4006 | 156 |  37k|  2 |  32 |   0 | 6.021828e-03 | 7.916113e-04 | 660.71%|  41.77%
+  180s|  4300 |  2469 | 59544 |  13.3 |   666M |  19 |4035 |4006 | 153 |  37k|  3 |  33 |   0 | 5.777715e-03 | 7.916113e-04 | 629.87%|  42.34%
+  185s|  4400 |  2517 | 60712 |  13.3 |   678M |  21 |4035 |4006 | 164 |  38k|  3 |  35 |   0 | 5.770718e-03 | 7.916113e-04 | 628.98%|  42.78%
+  193s|  4500 |  2545 | 61858 |  13.2 |   690M |  22 |4035 |4006 | 154 |  38k|  1 |  37 |   0 | 5.374112e-03 | 7.916113e-04 | 578.88%|  43.10%
+  198s|  4600 |  2621 | 62723 |  13.1 |   701M |  26 |4035 |4006 | 164 |  39k|  1 |  38 |   0 | 5.374112e-03 | 7.916113e-04 | 578.88%|  43.21%
+Traceback (most recent call last):
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/Seperator.py", line 187, in sepaexeclp
+    A, b = self.get_cons(node, j, box, h)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/Seperator.py", line 150, in get_cons
+    points, not_used = self.get_hull(node, j, bounds, self.hull_deriving_mode, h)
+                       ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/Seperator.py", line 139, in get_hull
+    hull = self.cut_hull(hull, xy, bounds[2 * xy], 0)
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/Seperator.py", line 84, in cut_hull
+    b1, not_used1, b2, not_used2 = IO.cutting_convex_hull(box[0], box[1], box[2], box[3], points, not_used, self.circles, xy_cut, cut_val)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: not enough values to unpack (expected 4, got 2)
+Exception ignored in: 'pyscipopt.scip.PySepaExeclp'
+Traceback (most recent call last):
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/Seperator.py", line 187, in sepaexeclp
+    A, b = self.get_cons(node, j, box, h)
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/Seperator.py", line 150, in get_cons
+    points, not_used = self.get_hull(node, j, bounds, self.hull_deriving_mode, h)
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/Seperator.py", line 139, in get_hull
+    hull = self.cut_hull(hull, xy, bounds[2 * xy], 0)
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/Seperator.py", line 84, in cut_hull
+    b1, not_used1, b2, not_used2 = IO.cutting_convex_hull(box[0], box[1], box[2], box[3], points, not_used, self.circles, xy_cut, cut_val)
+ValueError: not enough values to unpack (expected 4, got 2)
+[sepa.c:465] ERROR: Error <0> in function call
+[solve.c:1794] ERROR: Error <0> in function call
+[solve.c:2802] ERROR: Error <0> in function call
+[solve.c:3383] ERROR: Error <0> in function call
+[solve.c:4193] ERROR: Error <0> in function call
+[solve.c:4511] ERROR: Error <0> in function call
+[solve.c:5335] ERROR: Error <0> in function call
+[scip_solve.c:2766] ERROR: Error <0> in function call
+Traceback (most recent call last):
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/run_OFLP.py", line 229, in <module>
+    main()
+    ~~~~^^
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/run_OFLP.py", line 224, in main
+    run(instance, args.mode, plot=args.plot_file is not None, plot_file=args.plot_file, presolve_limit=600, time_limit=args.time_limit, precutting=args.precutting, seperator=args.seperator, update=args.update)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/run_OFLP.py", line 101, in run
+    OFP.optimize()
+    ~~~~~~~~~~~~^^
+  File "src/pyscipopt/scip.pxi", line 9360, in pyscipopt.scip.Model.optimize
+  File "src/pyscipopt/scip.pxi", line 325, in pyscipopt.scip.PY_SCIP_CALL
+Exception: SCIP: unspecified error!

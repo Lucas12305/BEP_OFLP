@@ -1,0 +1,13 @@
+Instance: ofl_2_1000ii.gms
+We have derived 2 subsets of hulls.
+We are going to be looking at 1 combinations. After the best possible solution will be pasted.
+Subproblems:   0%|          | 0/1 [00:00<?, ?it/s]Subproblems:   0%|          | 0/1 [00:00<?, ?it/s, best_radius=0.0604]Subproblems: 100%|██████████| 1/1 [00:00<00:00,  3.09it/s, best_radius=0.0604]Subproblems: 100%|██████████| 1/1 [00:00<00:00,  3.08it/s, best_radius=0.0604]
+============================================================
+Summary
+Facilities: 2, communities: 1000, mode: 1, precutting: 1, seperator: 0, update: 1
+Status: optimal, total time: 9.25 s
+Objective L (squared distance): 0.0036497562844646295
+Radius sqrt(L): 0.06041321283018004
+Facility 0: x = 0.0, y = 0.6934200121221676
+Facility 1: x = 0.13845057692307694, y = 0.0
+============================================================

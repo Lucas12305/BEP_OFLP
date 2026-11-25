@@ -27,7 +27,7 @@ def points_to_cons(points : list, p_inside : list = None) -> tuple[list, list]:
     if n < 3:
         return A,b
     if p_inside is None:
-        p_inside = [(points[0][0] + points[math.ceil(n/2)][0]) / 2, (p[0][1] + p[math.ceil(n/2)][1]) / 2 ]
+        p_inside = [sum(p[0] for p in points) / n, sum(p[1] for p in points) / n]
     
     for i in range(n):
         x1,y1,x2,y2 = points[i][0], points[i][1], points[(i + 1) % n][0], points[(i + 1) % n][1]
@@ -35,7 +35,7 @@ def points_to_cons(points : list, p_inside : list = None) -> tuple[list, list]:
         length = math.sqrt(a1 ** 2 + a2 ** 2)
         if length < 1e-12:
             continue
-        a1, a2, b1 = a1/length, a2/length, b/length
+        a1, a2, b1 = a1/length, a2/length, b1/length
         if a1 * p_inside[0] + a2 * p_inside[1] > b1:
             a1, a2, b1 = -a1, -a2, -b1
         A.append([a1,a2])
@@ -55,16 +55,10 @@ def feas_region_constraint(x_lb, x_ub, y_lb, y_ub, circles, method : int, model,
         b = [[]]*len(planes)
         for i in range(len(planes)):
             A[i] = planes[i][:2]
-            b[i] = planes[i][2]
+            b[i] = - planes[i][2]
     else:
         sorted_points, deleted_points = IO.feas_region_box_GS(x_lb, x_ub, y_lb, y_ub, circles)
-        if len(deleted_points) == 0:
-            n = len(sorted_points)
-            p1, p2 = sorted_points[0], sorted_points[math.ceil(n/2)]
-            x1, x2 = p1[0], p1[1]
-            y1, y2 = p2[0], p2[1]
-            deleted_points = [[x1 + ((x2 - x1) / 2), y1 + ((y2 - y1) / 2)]]
-        A, b = points_to_cons(sorted_points, deleted_points[0])
+        A, b = points_to_cons(sorted_points)
     for i in range(len(b)):
         model.addCons((A[i][0] * var[0] + A[i][1] * var[1]) <= b[i], f'Convex hull constraint {i} for {var}')
     return None
@@ -101,19 +95,14 @@ def create_LP(x_lb : float, x_ub : float, y_lb : float, y_ub : float, circles : 
 
 
 def add_conv_hull_cons_precut_GS(model, var_x, var_y, points) -> None:
-    n = len(points)
-    p1, p2 = points[0], points[math.ceil(n/2)]
-    x1, x2 = p1[0], p1[1]
-    y1, y2 = p2[0], p2[1]
-    p_ins = [x1 + ((x2 - x1) / 2), y1 + ((y2 - y1) / 2)]
-    A,b = points_to_cons(points, p_ins)
+    A,b = points_to_cons(points)
     for i in range(len(b)):
         model.addCons((A[i][0] * var_x + A[i][1] * var_y) <= b[i], f'Convex hull constraint {i} for {[var_x,var_y]}')
     return model
 
 def add_conv_hull_cons_precut_LP(model, var_x, var_y, planes) -> None:
     for i in range(len(planes)):
-        model.addCons((planes[i][0] * var_x + planes[i][1] * var_y) <= planes[i][2], f'Convex hull constraint {i} for {[var_x,var_y]}')
+        model.addCons((planes[i][0] * var_x + planes[i][1] * var_y) <= - planes[i][2], f'Convex hull constraint {i} for {[var_x,var_y]}')
     return model
 
 def update_LP(OFP, circles, x_lb, x_ub, y_lb, y_ub, mode, facilities) -> None:

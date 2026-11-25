@@ -11,6 +11,7 @@
 
 # how to run? 'bash run.sh ofl_2_100i'
 
+# Run at all modes: ./run_all.sh -r 3 -j 2 -t 600 ofl_3_100i
 
 # The folder in the repository where the text files (and plots) get saved
 OUT_DIR="results"
@@ -27,6 +28,8 @@ PRECUTTING=0
 # 0 is off, 1 is on
 SEPERATOR=0
 # 0 is off, 1 is on
+UPDATE=0
+# 0 is no update of the hull, 1 is from scratch, 2 is from the last hull (only with GS)
 TIME_LIMIT=""
 # maximum amount of time the program can run for
 INSTANCES=()
@@ -38,6 +41,7 @@ while [ $# -gt 0 ]; do
         --plot)       PLOT=1; shift ;;
         --precutting) PRECUTTING=1; shift ;;
         --separator)  SEPERATOR=1; shift ;;
+        --update)     UPDATE="$2"; shift 2 ;;
         --time-limit) TIME_LIMIT="$2"; shift 2 ;;
         -h|--help)    usage; exit 0 ;;
         -*)           echo "Unknown option: $1" >&2; usage >&2; exit 1 ;;
@@ -75,6 +79,9 @@ for INSTANCE in "${INSTANCES[@]}"; do
     fi
     if [ "$SEPERATOR" -eq 1 ]; then
         ARGS+=(--seperator 1)
+    fi
+    if [ "$UPDATE" -ne 0 ]; then
+        ARGS+=(--update "$UPDATE")
     fi
     if [ -n "$TIME_LIMIT" ]; then
         ARGS+=(--time-limit "$TIME_LIMIT")

@@ -1,6 +1,7 @@
 from pyscipopt import Sepa, SCIP_RESULT
 import Convex_hull as IO
 import Creating_LP as CLP
+import math
 
 def box_key(x_lb, x_ub, y_lb, y_ub, digits=9):
     return (round(x_lb, digits), round(x_ub, digits), round(y_lb, digits), round(y_ub, digits))
@@ -8,24 +9,45 @@ def box_key(x_lb, x_ub, y_lb, y_ub, digits=9):
 def facet_key(a : float,b : float,c : float, rounding : int=9):
     return (round(a,rounding), round(b,rounding), round(c,rounding))
 
+def planes_to_cons(planes : list) -> tuple[list, list]:
+    '''
+    Turns the planes of the LP method (p0 * x + p1 * y + p2 <= 0) into normalized constraints A[i] @ p <= b[i].
+    '''
+    A, b = [], []
+    for plane in planes:
+        length = math.sqrt(plane[0] ** 2 + plane[1] ** 2)
+        if length < 1e-12:
+            continue
+        A.append([plane[0] / length, plane[1] / length])
+        b.append(-plane[2] / length)
+    return A, b
 
 class HullSeperator(Sepa):
-    def __init__(self, var_x, var_y, circles, root_hulls, sep_mode=1, hull_deriving_mode=0, hull_of_facility=None):
+    def __init__(self, var_x, var_y, circles, root_hulls, sep_mode=1, hull_deriving_mode=0, hull_of_facility=None, hull_mode=1):
         self.var_x, self.var_y, self.circles = var_x, var_y, circles
         self.sep_mode, self.hull_deriving_mode = sep_mode, hull_deriving_mode
         self.root_hulls = root_hulls
+        # hull_mode 1 is GS, then a root hull is [points, not_used_points], and 0 is LP, then a root hull is a list of planes
+        self.hull_mode = hull_mode
         if hull_of_facility is None:
             hull_of_facility = [0] * len(var_x)
         self.hull_of_facility = hull_of_facility
 
 
         self.root_facets = []
-        for points, not_used in root_hulls:
-            A, b = CLP.points_to_cons(points)
+        self.root_cons = []
+        for root_hull in root_hulls:
+            if hull_mode == 1:
+                A, b = CLP.points_to_cons(root_hull[0])
+            else:
+                A, b = planes_to_cons(root_hull)
+            self.root_cons.append((A, b))
             self.root_facets.append({facet_key(A[i][0], A[i][1], b[i]) for i in range(len(b))})
 
         # The hull of every facility in every node that we have seen, with as key (node number, facility)
         self.node_hulls = {}
+        # The constraints of the LP method for the bounds that we have seen
+        self.lp_cons = {}
         self.var_index = None
         # The constraints that are already added, so that we do not add them again in the next round of the same node
         self.done = set()
@@ -120,6 +142,23 @@ class HullSeperator(Sepa):
         self.node_hulls[(node.getNumber(), j)] = hull
         return hull
 
+    def get_cons(self, node, j : int, bounds : tuple, h : int) -> tuple[list, list]:
+        '''
+        Gives the constraints A, b of the hull of facility j in this node, with the method that is used (GS or LP).
+        '''
+        if self.hull_mode == 1:
+            points, not_used = self.get_hull(node, j, bounds, self.hull_deriving_mode, h)
+            return CLP.points_to_cons(points)
+
+        # LP, here we can only make the hull from scratch for the bounds of the node
+        if self.hull_deriving_mode == 0 or bounds[1] - bounds[0] < 1e-6 or bounds[3] - bounds[2] < 1e-6:
+            return self.root_cons[h]
+        key = box_key(*bounds)
+        if key not in self.lp_cons:
+            planes = IO.feas_region_box_LP(bounds[0], bounds[1], bounds[2], bounds[3], self.circles, IO.generate_points(bounds[0], bounds[1], bounds[2], bounds[3]))[1]
+            self.lp_cons[key] = planes_to_cons(planes)
+        return self.lp_cons[key]
+
     def add_row(self, x, y, a1 : float, a2 : float, c : float, name : str, local : bool, force : bool) -> bool:
         '''
         Adds the constraint a1 * x + a2 * y <= c to the LP, and gives True when this makes the node infeasible.
@@ -145,8 +184,7 @@ class HullSeperator(Sepa):
             
             h = self.hull_of_facility[j] # starting hull of facility
             box = (x.getLbLocal(), x.getUbLocal(), y.getLbLocal(), y.getUbLocal())
-            points, not_used = self.get_hull(node, j, box, self.hull_deriving_mode, h)
-            A, b = CLP.points_to_cons(points)
+            A, b = self.get_cons(node, j, box, h)
 
         
             # When mode == 1 we use the seperator, otherwise the seperator gets used to update the hull after a cut

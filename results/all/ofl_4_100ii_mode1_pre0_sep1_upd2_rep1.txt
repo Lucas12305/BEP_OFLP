@@ -1,0 +1,100 @@
+Instance: ofl_4_100ii.gms
+presolving:
+(round 1, fast)       0 del vars, 0 del conss, 0 add conss, 5 chg bounds, 0 chg sides, 0 chg coeffs, 0 upgd conss, 0 impls, 0 clqs, 0 implints
+   (0.0s) symmetry computation started: requiring (bin +, int +, cont +), (fixed: bin -, int -, cont -)
+   (0.0s) symmetry computation finished: 3 generators found (max: 1500, log10 of symmetry group size: 1.38) (symcode time: 0.00)
+dynamic symmetry handling statistics:
+   orbitopal reduction:        1 components: 2x4
+   orbital reduction:         no components
+   lexicographic reduction:   no permutations
+handled 1 out of 1 symmetry components
+presolving (2 rounds: 2 fast, 1 medium, 1 exhaustive):
+ 0 deleted vars, 0 deleted constraints, 0 added constraints, 5 tightened bounds, 0 added holes, 0 changed sides, 0 changed coefficients
+ 0 implications, 0 cliques, 0 implied integral variables (0 bin, 0 int, 0 cont)
+presolved problem has 9 variables (0 bin, 0 int, 9 cont) and 406 constraints
+    406 constraints of type <nonlinear>
+Presolving Time: 0.01
+
+ time | node  | left  |LP iter|LP it/n|mem/heur|mdpt |vars |cons |rows |cuts |sepa|confs|strbr|  dualbound   | primalbound  |  gap   | compl. 
+  0.0s|     1 |     0 |   246 |     - |  7254k |   0 | 435 | 406 | 414 |   0 |  0 |   0 |   0 | 5.031818e-01 |      --      |    Inf | unknown
+L 0.0s|     1 |     0 |   246 |     - |undercov|   0 | 435 | 406 | 414 |   0 |  0 |   0 |   0 | 5.031818e-01 | 2.338287e-04 |  Large | unknown
+L 0.1s|     1 |     0 |   246 |     - |undercov|   0 | 435 | 406 | 414 |   0 |  0 |   0 |   0 | 5.031818e-01 | 6.664339e-03 |7450.36%| unknown
+L 0.2s|     1 |     0 |   246 |     - |  subnlp|   0 | 435 | 406 | 414 |   0 |  0 |   0 |   0 | 5.031818e-01 | 8.587246e-03 |5759.64%| unknown
+  0.2s|     1 |     0 |   246 |     - |  8772k |   0 | 435 | 406 | 414 |   0 |  0 |   0 |   0 | 5.031818e-01 | 8.587246e-03 |5759.64%| unknown
+  0.2s|     1 |     0 |   246 |     - |  8772k |   0 | 435 | 406 | 414 |   0 |  0 |   0 |   0 | 5.031818e-01 | 8.587246e-03 |5759.64%| unknown
+  0.2s|     1 |     0 |  1254 |     - |  8860k |   0 | 435 | 406 | 414 |   0 |  1 |   0 |   0 | 5.031818e-01 | 8.587246e-03 |5759.64%| unknown
+L 2.4s|     1 |     0 |  1254 |     - |multista|   0 | 435 | 406 | 414 |   0 |  2 |   0 |   0 | 5.031818e-01 | 8.689168e-03 |5690.91%| unknown
+  2.4s|     1 |     0 |  1254 |     - |  9496k |   0 | 435 | 406 | 414 |   0 |  2 |   0 |   0 | 5.031818e-01 | 8.689168e-03 |5690.91%| unknown
+  2.4s|     1 |     2 |  1254 |     - |  9509k |   0 | 435 | 406 | 414 |   0 |  3 |   0 |   0 | 5.031818e-01 | 8.689168e-03 |5690.91%| unknown
+  2.8s|   100 |    85 |  2670 |  24.5 |    10M |  11 | 435 | 406 | 112 |1013 |  2 |   1 |   0 | 1.272261e-01 | 8.689168e-03 |1364.19%|   7.29%
+  3.1s|   200 |   143 |  3864 |  18.2 |    12M |  11 | 435 | 406 | 115 |1633 |  3 |   7 |   0 | 1.200468e-01 | 8.689168e-03 |1281.57%|  11.03%
+  3.3s|   300 |   201 |  5193 |  16.5 |    13M |  12 | 435 | 406 | 103 |2257 |  3 |   7 |   0 | 1.101979e-01 | 8.689168e-03 |1168.22%|  14.33%
+  3.5s|   400 |   255 |  6632 |  16.0 |    15M |  12 | 435 | 406 |  82 |2854 |  2 |  10 |   0 | 8.437728e-02 | 8.689168e-03 | 871.06%|  19.05%
+  3.6s|   500 |   309 |  7874 |  15.3 |    17M |  12 | 435 | 406 |  97 |3357 |  3 |  12 |   0 | 7.479121e-02 | 8.689168e-03 | 760.74%|  21.21%
+ time | node  | left  |LP iter|LP it/n|mem/heur|mdpt |vars |cons |rows |cuts |sepa|confs|strbr|  dualbound   | primalbound  |  gap   | compl. 
+  3.8s|   600 |   371 |  8916 |  14.5 |    18M |  13 | 435 | 406 |  97 |3807 |  3 |  12 |   0 | 6.896908e-02 | 8.689168e-03 | 693.74%|  22.76%
+  3.9s|   700 |   437 |  9941 |  13.9 |    19M |  13 | 435 | 406 |  96 |4233 |  4 |  13 |   0 | 6.116149e-02 | 8.689168e-03 | 603.88%|  25.26%
+  4.1s|   800 |   467 | 10840 |  13.3 |    20M |  14 | 435 | 406 |  97 |4607 |  2 |  17 |   0 | 5.890918e-02 | 8.689168e-03 | 577.96%|  29.06%
+  4.2s|   900 |   489 | 11787 |  12.8 |    23M |  14 | 435 | 406 | 121 |4956 |  3 |  22 |   0 | 5.553094e-02 | 8.689168e-03 | 539.08%|  31.52%
+  4.4s|  1000 |   521 | 12928 |  12.7 |    25M |  15 | 435 | 406 | 103 |5419 |  2 |  24 |   0 | 5.060832e-02 | 8.689168e-03 | 482.43%|  34.33%
+  4.5s|  1100 |   559 | 13815 |  12.3 |    26M |  15 | 435 | 406 | 107 |5751 |  0 |  28 |   0 | 4.805724e-02 | 8.689168e-03 | 453.07%|  35.86%
+  4.7s|  1200 |   597 | 14517 |  11.9 |    27M |  15 | 435 | 406 |  96 |6009 |  2 |  35 |   0 | 4.735531e-02 | 8.689168e-03 | 444.99%|  36.34%
+  4.9s|  1300 |   629 | 15405 |  11.7 |    29M |  16 | 435 | 406 |   0 |6318 |  0 |  40 |   0 | 4.582352e-02 | 8.689168e-03 | 427.36%|  36.88%
+  5.1s|  1400 |   675 | 16339 |  11.5 |    30M |  17 | 435 | 406 | 101 |6676 |  1 |  42 |   0 | 4.307417e-02 | 8.689168e-03 | 395.72%|  38.06%
+  5.3s|  1500 |   705 | 17462 |  11.5 |    33M |  17 | 435 | 406 |   0 |7055 |  0 |  46 |   0 | 3.822996e-02 | 8.689168e-03 | 339.97%|  41.64%
+  5.5s|  1600 |   747 | 18345 |  11.3 |    35M |  17 | 435 | 406 | 109 |7407 |  1 |  49 |   0 | 3.765972e-02 | 8.689168e-03 | 333.41%|  42.55%
+  5.7s|  1700 |   793 | 19144 |  11.1 |    36M |  17 | 435 | 406 | 132 |7727 |  3 |  49 |   0 | 3.762988e-02 | 8.689168e-03 | 333.07%|  42.86%
+  5.8s|  1800 |   825 | 19934 |  10.9 |    37M |  17 | 435 | 406 | 117 |8065 |  3 |  50 |   0 | 3.709724e-02 | 8.689168e-03 | 326.94%|  43.36%
+  6.0s|  1900 |   857 | 21083 |  11.0 |    39M |  17 | 435 | 406 | 116 |8518 |  3 |  51 |   0 | 3.468085e-02 | 8.689168e-03 | 299.13%|  44.24%
+  6.2s|  2000 |   885 | 22135 |  10.9 |    40M |  17 | 435 | 406 | 104 |8865 |  2 |  54 |   0 | 3.405062e-02 | 8.689168e-03 | 291.87%|  44.75%
+ time | node  | left  |LP iter|LP it/n|mem/heur|mdpt |vars |cons |rows |cuts |sepa|confs|strbr|  dualbound   | primalbound  |  gap   | compl. 
+  6.3s|  2100 |   919 | 23105 |  10.9 |    42M |  17 | 435 | 406 | 117 |9196 |  2 |  54 |   0 | 3.243645e-02 | 8.689168e-03 | 273.30%|  45.46%
+  6.5s|  2200 |   963 | 23967 |  10.8 |    44M |  17 | 435 | 406 |  91 |9494 |  2 |  54 |   0 | 3.215292e-02 | 8.689168e-03 | 270.03%|  45.98%
+  6.7s|  2300 |  1013 | 24793 |  10.7 |    45M |  18 | 435 | 406 |  99 |9798 |  1 |  54 |   0 | 3.176145e-02 | 8.689168e-03 | 265.53%|  46.47%
+  7.0s|  2400 |  1053 | 25690 |  10.6 |    48M |  19 | 435 | 406 | 109 |  10k|  2 |  55 |   0 | 3.144563e-02 | 8.689168e-03 | 261.89%|  46.97%
+  7.2s|  2500 |  1097 | 26671 |  10.6 |    49M |  19 | 435 | 406 | 123 |  10k|  1 |  56 |   0 | 3.092213e-02 | 8.689168e-03 | 255.87%|  47.64%
+Traceback (most recent call last):
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/Seperator.py", line 187, in sepaexeclp
+    A, b = self.get_cons(node, j, box, h)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/Seperator.py", line 150, in get_cons
+    points, not_used = self.get_hull(node, j, bounds, self.hull_deriving_mode, h)
+                       ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/Seperator.py", line 140, in get_hull
+    hull = self.cut_hull(hull, xy, bounds[2 * xy + 1], 1)
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/Seperator.py", line 84, in cut_hull
+    b1, not_used1, b2, not_used2 = IO.cutting_convex_hull(box[0], box[1], box[2], box[3], points, not_used, self.circles, xy_cut, cut_val)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: not enough values to unpack (expected 4, got 2)
+Exception ignored in: 'pyscipopt.scip.PySepaExeclp'
+Traceback (most recent call last):
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/Seperator.py", line 187, in sepaexeclp
+    A, b = self.get_cons(node, j, box, h)
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/Seperator.py", line 150, in get_cons
+    points, not_used = self.get_hull(node, j, bounds, self.hull_deriving_mode, h)
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/Seperator.py", line 140, in get_hull
+    hull = self.cut_hull(hull, xy, bounds[2 * xy + 1], 1)
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/Seperator.py", line 84, in cut_hull
+    b1, not_used1, b2, not_used2 = IO.cutting_convex_hull(box[0], box[1], box[2], box[3], points, not_used, self.circles, xy_cut, cut_val)
+ValueError: not enough values to unpack (expected 4, got 2)
+[sepa.c:465] ERROR: Error <0> in function call
+[solve.c:1794] ERROR: Error <0> in function call
+[solve.c:2802] ERROR: Error <0> in function call
+[solve.c:3383] ERROR: Error <0> in function call
+[solve.c:4193] ERROR: Error <0> in function call
+[solve.c:4511] ERROR: Error <0> in function call
+[solve.c:5335] ERROR: Error <0> in function call
+[scip_solve.c:2766] ERROR: Error <0> in function call
+Traceback (most recent call last):
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/run_OFLP.py", line 229, in <module>
+    main()
+    ~~~~^^
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/run_OFLP.py", line 224, in main
+    run(instance, args.mode, plot=args.plot_file is not None, plot_file=args.plot_file, presolve_limit=600, time_limit=args.time_limit, precutting=args.precutting, seperator=args.seperator, update=args.update)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lucasklaasse/Desktop/BEP_OFLP/run_OFLP.py", line 101, in run
+    OFP.optimize()
+    ~~~~~~~~~~~~^^
+  File "src/pyscipopt/scip.pxi", line 9360, in pyscipopt.scip.Model.optimize
+  File "src/pyscipopt/scip.pxi", line 325, in pyscipopt.scip.PY_SCIP_CALL
+Exception: SCIP: unspecified error!

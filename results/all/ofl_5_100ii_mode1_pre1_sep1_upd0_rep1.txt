@@ -1,0 +1,16 @@
+Instance: ofl_5_100ii.gms
+We have derived 7 subsets of hulls.
+We are going to be looking at 21 combinations. After the best possible solution will be pasted.
+Subproblems:   0%|          | 0/21 [00:00<?, ?it/s]Subproblems:   0%|          | 0/21 [00:00<?, ?it/s, best_radius=0.1100]Subproblems:   0%|          | 0/21 [00:00<?, ?it/s, best_radius=0.1100]Subproblems:   0%|          | 0/21 [00:01<?, ?it/s, best_radius=0.1101]Subproblems:  14%|█▍        | 3/21 [00:01<00:06,  2.75it/s, best_radius=0.1101]Subproblems:  14%|█▍        | 3/21 [00:01<00:06,  2.75it/s, best_radius=0.1107]Subproblems:  14%|█▍        | 3/21 [00:01<00:06,  2.75it/s, best_radius=0.1107]Subproblems:  24%|██▍       | 5/21 [00:01<00:03,  4.66it/s, best_radius=0.1107]Subproblems:  24%|██▍       | 5/21 [00:01<00:03,  4.66it/s, best_radius=0.1107]Subproblems:  24%|██▍       | 5/21 [00:01<00:03,  4.66it/s, best_radius=0.1107]Subproblems:  24%|██▍       | 5/21 [00:01<00:03,  4.66it/s, best_radius=0.1107]Subproblems:  24%|██▍       | 5/21 [00:01<00:03,  4.66it/s, best_radius=0.1107]Subproblems:  43%|████▎     | 9/21 [00:01<00:01,  9.43it/s, best_radius=0.1107]Subproblems:  43%|████▎     | 9/21 [00:01<00:01,  9.43it/s, best_radius=0.1107]Subproblems:  43%|████▎     | 9/21 [00:01<00:01,  9.43it/s, best_radius=0.1107]Subproblems:  43%|████▎     | 9/21 [00:01<00:01,  9.43it/s, best_radius=0.1107]Subproblems:  43%|████▎     | 9/21 [00:01<00:01,  9.43it/s, best_radius=0.1107]Subproblems:  62%|██████▏   | 13/21 [00:01<00:00, 14.40it/s, best_radius=0.1107]Subproblems:  62%|██████▏   | 13/21 [00:01<00:00, 14.40it/s, best_radius=0.1107]Subproblems:  62%|██████▏   | 13/21 [00:01<00:00, 14.40it/s, best_radius=0.1107]Subproblems:  62%|██████▏   | 13/21 [00:01<00:00, 14.40it/s, best_radius=0.1115]Subproblems:  76%|███████▌  | 16/21 [00:01<00:00, 17.22it/s, best_radius=0.1115]Subproblems:  76%|███████▌  | 16/21 [00:01<00:00, 17.22it/s, best_radius=0.1115]Subproblems:  76%|███████▌  | 16/21 [00:01<00:00, 17.22it/s, best_radius=0.1115]Subproblems:  76%|███████▌  | 16/21 [00:01<00:00, 17.22it/s, best_radius=0.1115]Subproblems:  76%|███████▌  | 16/21 [00:01<00:00, 17.22it/s, best_radius=0.1115]Subproblems:  76%|███████▌  | 16/21 [00:01<00:00, 17.22it/s, best_radius=0.1115]Subproblems: 100%|██████████| 21/21 [00:01<00:00, 24.04it/s, best_radius=0.1115]Subproblems: 100%|██████████| 21/21 [00:01<00:00, 12.90it/s, best_radius=0.1115]
+============================================================
+Summary
+Facilities: 5, communities: 100, mode: 1, precutting: 1, seperator: 1, update: 0
+Status: optimal, total time: 2.81 s
+Objective L (squared distance): 0.012429532645580162
+Radius sqrt(L): 0.11148781388824593
+Facility 0: x = 0.009771261083537538, y = 0.35822449434776393
+Facility 1: x = -4.513271966915167e-09, y = 1.0000000056116534
+Facility 2: x = 0.9938613209832986, y = 0.24906205422632688
+Facility 3: x = 0.8202655526280864, y = 0.993582878984592
+Facility 4: x = 0.41221388639821854, y = 0.766472282981744
+============================================================

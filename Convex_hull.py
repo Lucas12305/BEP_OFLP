@@ -287,8 +287,8 @@ def create_conv_region(points: list, solutions: list) -> list:
         )
 
         # Constraints: p0*x + p1*y + p2 <= 0
-        for x, y in points:
-            model.addCons(p0*x + p1*y + p2 <= 0)
+        for p in points:
+            model.addCons(p0*p[0] + p1*p[1] + p2 <= 0)
 
         # Solve
         model.optimize()
@@ -736,7 +736,7 @@ def feas_region_box_LP_cutting(x_lb : float, x_ub : float, y_lb : float, y_ub : 
         for p in range(len(planes)):
             PLOT.plot_box_LP(x_lb,x_ub,y_lb,y_ub, circles, subset_points[p], planes[p], trc, rc)
     
-    return points, planes
+    return subset_points, planes
 
 
 
@@ -1175,9 +1175,9 @@ def cutting_convex_hull(x_lb : float, x_ub : float, y_lb : float, y_ub : float, 
 
     # We use b1 and b2 to get the upper and lower bound for the points
     if len(b1) == 0:
-        return [], b2
+        return [], [], b2, not_used_points
     if len(b2) == 0:
-        return b1, []
+        return b1, not_used_points, [], []
     
     v = abs(xy_cut - 1)
     values = []
