@@ -383,7 +383,7 @@ def angle_points_custom(p1, p2, ref_angle):
     :param p1: The first point considered, i.e. the reference point.
     :param p2: The second point considered, i.e. the other point.
     '''
-    angle = (math.atan2(p2[1] - p1[1], p2[0] - p1[0] - ref_angle) % (2 * math.pi))
+    angle = (math.atan2(p2[1] - p1[1], p2[0] - p1[0]) - ref_angle) % (2 * math.pi)
     dist = math.sqrt((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2)
     return angle, dist
 
@@ -1027,7 +1027,7 @@ def box_making(sorted_points : list, first_vert_index1 : int, last_vert_index1 :
     :param last_vert_index2: The index of the last vertex of b2.
     '''
     if first_vert_index1 is not None:
-        if first_vert_index1 >= last_vert_index1:
+        if first_vert_index1 > last_vert_index1:
             b1 = sorted_points[first_vert_index1:] + sorted_points[:last_vert_index1 + 1]
         else:
             b1 = sorted_points[first_vert_index1:last_vert_index1 + 1]
@@ -1174,10 +1174,8 @@ def cutting_convex_hull(x_lb : float, x_ub : float, y_lb : float, y_ub : float, 
     b1, b2 = get_boundary_index(sorted_points, cut_val, xy_cut)
 
     # We use b1 and b2 to get the upper and lower bound for the points
-    if len(b1) == 0:
-        return [], [], b2, not_used_points
-    if len(b2) == 0:
-        return b1, not_used_points, [], []
+    if len(b1) == 0 or len(b2) == 0:
+        return b1, not_used_points, b2, not_used_points
     
     v = abs(xy_cut - 1)
     values = []
